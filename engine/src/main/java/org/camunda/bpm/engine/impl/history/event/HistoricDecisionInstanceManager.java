@@ -16,23 +16,6 @@
  */
 package org.camunda.bpm.engine.impl.history.event;
 
-import org.camunda.bpm.engine.authorization.Resources;
-import org.camunda.bpm.engine.history.HistoricDecisionInputInstance;
-import org.camunda.bpm.engine.history.HistoricDecisionInstance;
-import org.camunda.bpm.engine.history.HistoricDecisionOutputInstance;
-import org.camunda.bpm.engine.history.CleanableHistoricDecisionInstanceReportResult;
-import org.camunda.bpm.engine.impl.CleanableHistoricDecisionInstanceReportImpl;
-import org.camunda.bpm.engine.impl.HistoricDecisionInstanceQueryImpl;
-import org.camunda.bpm.engine.impl.Page;
-import org.camunda.bpm.engine.impl.db.DbEntity;
-import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
-import org.camunda.bpm.engine.impl.db.entitymanager.operation.DbOperation;
-import org.camunda.bpm.engine.impl.persistence.AbstractHistoricManager;
-import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayEntity;
-import org.camunda.bpm.engine.impl.util.ClockUtil;
-import org.camunda.bpm.engine.impl.util.ImmutablePair;
-import org.camunda.bpm.engine.impl.variable.serializer.AbstractTypedValueSerializer;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +24,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.camunda.bpm.engine.authorization.Resources;
+import org.camunda.bpm.engine.history.CleanableHistoricDecisionInstanceReportResult;
+import org.camunda.bpm.engine.history.HistoricDecisionInputInstance;
+import org.camunda.bpm.engine.history.HistoricDecisionInstance;
+import org.camunda.bpm.engine.history.HistoricDecisionOutputInstance;
+import org.camunda.bpm.engine.impl.CleanableHistoricDecisionInstanceReportImpl;
+import org.camunda.bpm.engine.impl.HistoricDecisionInstanceQueryImpl;
+import org.camunda.bpm.engine.impl.Page;
+import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateContext;
+import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateResult;
+import org.camunda.bpm.engine.impl.db.DbEntity;
+import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
+import org.camunda.bpm.engine.impl.db.entitymanager.operation.DbOperation;
+import org.camunda.bpm.engine.impl.persistence.AbstractHistoricManager;
+import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayEntity;
+import org.camunda.bpm.engine.impl.util.ClockUtil;
+import org.camunda.bpm.engine.impl.util.ImmutablePair;
+import org.camunda.bpm.engine.impl.variable.serializer.AbstractTypedValueSerializer;
 
 /**
  * Data base operations for {@link HistoricDecisionInstanceEntity}.
@@ -169,7 +170,7 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
       parameters.put("minuteTo", minuteTo);
     }
     ListQueryParameterObject parameterObject = new ListQueryParameterObject(parameters, 0, batchSize);
-    return (List<String>) getDbEntityManager().selectList("selectHistoricDecisionInstanceIdsForCleanup", parameterObject);
+    return getDbEntityManager().selectList("selectHistoricDecisionInstanceIdsForCleanup", parameterObject);
   }
 
   protected void appendHistoricDecisionInputInstances(Map<String, HistoricDecisionInstanceEntity> decisionInstancesById, HistoricDecisionInstanceQueryImpl query) {
@@ -304,18 +305,39 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
   }
 
   public void addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put("rootProcessInstanceId", rootProcessInstanceId);
-    parameters.put("removalTime", removalTime);
+    addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, new UpdateContext());
+  }
 
-    getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByRootProcessInstanceId", parameters);
+  public UpdateResult addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, UpdateContext updateContext) {
+    if (!updateContext.isSplitByTable()) {
+      Map<String, Object> parameters = new HashMap<>();
+      parameters.put("rootProcessInstanceId", rootProcessInstanceId);
+      parameters.put("removalTime", removalTime);
 
-    getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionInputInstanceEntity.class, "updateHistoricDecisionInputInstancesByRootProcessInstanceId", parameters);
+      getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByRootProcessInstanceId", parameters);
 
-    getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionOutputInstanceEntity.class, "updateHistoricDecisionOutputInstancesByRootProcessInstanceId", parameters);
+      getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionInputInstanceEntity.class, "updateHistoricDecisionInputInstancesByRootProcessInstanceId", parameters);
+
+      getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionOutputInstanceEntity.class, "updateHistoricDecisionOutputInstancesByRootProcessInstanceId", parameters);
+
+      return new UpdateResult(1, 0, 0);
+    } else {// TODO
+      // check if index valid
+      // update table at index
+      // if update row count == limit
+      //   keep table index (more to update)
+      //   return true
+      // else
+      //   if all tables handled
+      //     return false
+      //   else
+      //     set table index + 1 (next table)
+      //     return true
+      return new UpdateResult(0, 0, 0);
+    }
   }
 
   public void addRemovalTimeToDecisionsByProcessInstanceId(String processInstanceId, Date removalTime) {

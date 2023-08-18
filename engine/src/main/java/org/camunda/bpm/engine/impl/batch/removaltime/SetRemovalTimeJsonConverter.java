@@ -17,14 +17,12 @@
 package org.camunda.bpm.engine.impl.batch.removaltime;
 
 import com.google.gson.JsonObject;
-
+import java.util.Date;
+import java.util.List;
 import org.camunda.bpm.engine.impl.batch.AbstractBatchConfigurationObjectConverter;
 import org.camunda.bpm.engine.impl.batch.DeploymentMappingJsonConverter;
 import org.camunda.bpm.engine.impl.batch.DeploymentMappings;
 import org.camunda.bpm.engine.impl.util.JsonUtil;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author Tassilo Weidner
@@ -39,6 +37,9 @@ public class SetRemovalTimeJsonConverter
   protected static final String REMOVAL_TIME = "removalTime";
   protected static final String HAS_REMOVAL_TIME = "hasRemovalTime";
   protected static final String IS_HIERARCHICAL = "isHierarchical";
+  protected static final String PROCESS_TABLE_INDEX = "processTableIndex";
+  protected static final String DMN_TABLE_INDEX = "dmnTableIndex";
+  protected static final String PROCESS_ID_INDEX = "processIdIndex";
 
   @Override
   public JsonObject writeConfiguration(SetRemovalTimeBatchConfiguration configuration) {
@@ -49,6 +50,9 @@ public class SetRemovalTimeJsonConverter
     JsonUtil.addDateField(json, REMOVAL_TIME, configuration.getRemovalTime());
     JsonUtil.addField(json, HAS_REMOVAL_TIME, configuration.hasRemovalTime());
     JsonUtil.addField(json, IS_HIERARCHICAL, configuration.isHierarchical());
+    JsonUtil.addField(json, PROCESS_TABLE_INDEX, configuration.getProcessTableIndex());
+    JsonUtil.addField(json, DMN_TABLE_INDEX, configuration.getDmnTableIndex());
+    JsonUtil.addField(json, IS_HIERARCHICAL, configuration.getProcessIdIndex());
 
     return json;
   }
@@ -68,10 +72,17 @@ public class SetRemovalTimeJsonConverter
 
     boolean isHierarchical = JsonUtil.getBoolean(jsonObject, IS_HIERARCHICAL);
 
+    int processTableIndex = JsonUtil.getInt(jsonObject, PROCESS_TABLE_INDEX);
+    int dmnTableIndex = JsonUtil.getInt(jsonObject, DMN_TABLE_INDEX);
+    int processIdIndex = JsonUtil.getInt(jsonObject, PROCESS_ID_INDEX);
+
     return new SetRemovalTimeBatchConfiguration(instanceIds, mappings)
       .setRemovalTime(removalTime)
       .setHasRemovalTime(hasRemovalTime)
-      .setHierarchical(isHierarchical);
+      .setHierarchical(isHierarchical)
+      .setProcessTableIndex(processTableIndex)
+      .setDmnTableIndex(dmnTableIndex)
+      .setProcessIdIndex(processIdIndex);
   }
 
 }

@@ -21,9 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
 import java.util.Optional;
-import org.camunda.bpm.engine.ProcessEngineConfiguration;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
@@ -82,7 +80,7 @@ public abstract class HistoryCleanupHelper {
     }
   }
 
-  private static Integer getHistoryCleanupBatchSize(CommandContext commandContext) {
+  public static Integer getHistoryCleanupBatchSize(CommandContext commandContext) {
     return commandContext.getProcessEngineConfiguration().getHistoryCleanupBatchSize();
   }
 
