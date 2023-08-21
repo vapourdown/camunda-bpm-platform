@@ -21,18 +21,22 @@ import static org.camunda.bpm.engine.ProcessEngineConfiguration.HISTORY_REMOVAL_
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import org.camunda.bpm.engine.batch.Batch;
 import org.camunda.bpm.engine.impl.batch.AbstractBatchJobHandler;
 import org.camunda.bpm.engine.impl.batch.BatchJobContext;
 import org.camunda.bpm.engine.impl.batch.RepeatableBatchJobDeclaration;
+import org.camunda.bpm.engine.impl.cfg.TransactionState;
+import org.camunda.bpm.engine.impl.db.DbEntity;
+import org.camunda.bpm.engine.impl.db.entitymanager.operation.DbOperation;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.jobexecutor.JobDeclaration;
 import org.camunda.bpm.engine.impl.jobexecutor.historycleanup.HistoryCleanupHelper;
 import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayEntity;
+import org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.HistoricProcessInstanceEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.MessageEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.RepeatableBatchJobEntity;
+import org.camunda.bpm.engine.impl.persistence.entity.JobEntity;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 
 /**
@@ -47,41 +51,28 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
                              ExecutionEntity execution,
                              CommandContext commandContext,
                              String tenantId) {
-    addRemovalTime(batchConfiguration, execution, commandContext, tenantId, HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext));
+    addRemovalTime(batchConfiguration, commandContext, HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext));
   }
 
   protected void addRemovalTime(SetRemovalTimeBatchConfiguration batchConfiguration,
-      ExecutionEntity execution,
       CommandContext commandContext,
-      String tenantId,
       int batchSize) {
     if (batchConfiguration.isSplitByHistoryTable()) {
       int processIdIndex = batchConfiguration.getProcessIdIndex();
       String instanceId = batchConfiguration.getIds().get(processIdIndex);
-      UpdateContext updateContext = new UpdateContext(true, batchConfiguration.getProcessTableIndex(), batchConfiguration.getDmnTableIndex(), batchSize);
+      UpdateContext updateContext = new UpdateContext(true, batchSize);
       UpdateResult updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, updateContext, commandContext);
       if (updateResult == null) {
         // instance not found or removal time exists already, next instance
         if (processIdIndex < batchConfiguration.getIds().size() - 1) {
           batchConfiguration.setProcessIdIndex(processIdIndex + 1);
-          batchConfiguration.setProcessTableIndex(0);
-          batchConfiguration.setDmnTableIndex(0);
-          addRemovalTime(batchConfiguration, execution, commandContext, tenantId, batchSize);
-        }
-      } else if (updateResult.remainingBatchSize > 0) {
-        // current instance done, next instance
-        if (processIdIndex < batchConfiguration.getIds().size() - 1) {
-          batchConfiguration.setProcessIdIndex(processIdIndex + 1);
-          batchConfiguration.setProcessTableIndex(0);
-          batchConfiguration.setDmnTableIndex(0);
-          addRemovalTime(batchConfiguration, execution, commandContext, tenantId, updateResult.remainingBatchSize);
+          addRemovalTime(batchConfiguration, commandContext, batchSize);
         }
       } else {
-        // current instance not done, limit reached at a table, rerun job with new table index(es)
-        batchConfiguration.setProcessTableIndex(updateResult.getProcessTableIndex());
-        batchConfiguration.setDmnTableIndex(updateResult.getDmnTableIndex());
-        saveConfiguration(commandContext.getByteArrayManager(), batchConfiguration);
-        ((RepeatableBatchJobEntity) commandContext.getCurrentJob()).setDoRepeat(true);
+        JobEntity currentJob = commandContext.getCurrentJob();
+        ProcessSetRemovalTimeResultHandler transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, batchConfiguration,
+            currentJob.getId(), commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew(), this);
+        commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, transactionResulthandler);
       }
     } else {
       batchConfiguration.getIds().forEach(id -> addRemovalTimeToInstance(id, batchConfiguration, new UpdateContext(), commandContext));
@@ -125,27 +116,23 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
   protected UpdateResult addRemovalTimeToHierarchy(String rootProcessInstanceId, Date removalTime, UpdateContext updateContext, CommandContext commandContext) {
     UpdateResult updateResult = commandContext.getHistoricProcessInstanceManager()
         .addRemovalTimeToProcessInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, updateContext);
-    if (updateResult.remainingBatchSize > 0 && isDmnEnabled(commandContext)) {
-      // process tables are done, update DMN tables for the same instance
+    if (isDmnEnabled(commandContext)) {
       return commandContext.getHistoricDecisionInstanceManager()
-          .addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, updateContext);
+          .addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, updateContext)
+          .addOperations(updateResult.getOperations());
     }
     return updateResult;
   }
 
   protected UpdateResult addRemovalTime(String instanceId, Date removalTime, UpdateContext updateContext, CommandContext commandContext) {
-    if (updateContext.isSplitByTable()) {
-
-    } else {
-      commandContext.getHistoricProcessInstanceManager()
-        .addRemovalTimeById(instanceId, removalTime);
-
-      if (isDmnEnabled(commandContext)) {
-        commandContext.getHistoricDecisionInstanceManager()
-          .addRemovalTimeToDecisionsByProcessInstanceId(instanceId, removalTime);
-      }
+    UpdateResult updateResult = commandContext.getHistoricProcessInstanceManager()
+      .addRemovalTimeById(instanceId, removalTime, updateContext);
+    if (isDmnEnabled(commandContext)) {
+      return commandContext.getHistoricDecisionInstanceManager()
+        .addRemovalTimeToDecisionsByProcessInstanceId(instanceId, removalTime, updateContext)
+        .addOperations(updateResult.getOperations());
     }
-    return null;
+    return updateResult;
   }
 
   protected boolean hasBaseTime(HistoricProcessInstanceEntity instance, CommandContext commandContext) {
@@ -202,7 +189,7 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
   }
 
   @Override
-  public JobDeclaration<BatchJobContext, MessageEntity> getJobDeclaration() {
+  public JobDeclaration<BatchJobContext, EverLivingJobEntity> getJobDeclaration() {
     return JOB_DECLARATION;
   }
 
@@ -227,15 +214,11 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
 
   public static class UpdateContext {
     protected boolean splitByTable;
-    protected int processTableIndex;
-    protected int dmnTableIndex;
     protected int batchSize;
 
     public UpdateContext() {}
-    public UpdateContext(boolean splitByTable, int processTableIndex, int dmnTableIndex, int batchSize) {
+    public UpdateContext(boolean splitByTable, int batchSize) {
       this.splitByTable = splitByTable;
-      this.processTableIndex = processTableIndex;
-      this.dmnTableIndex = dmnTableIndex;
       this.batchSize = batchSize;
     }
 
@@ -245,20 +228,8 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
     public void setSplitByTable(boolean splitByTable) {
       this.splitByTable = splitByTable;
     }
-    public int getProcessTableIndex() {
-      return processTableIndex;
-    }
-    public void setProcessTableIndex(int processTableIndex) {
-      this.processTableIndex = processTableIndex;
-    }
-    public int getDmnTableIndex() {
-      return dmnTableIndex;
-    }
-    public void setDmnTableIndex(int dmnTableIndex) {
-      this.dmnTableIndex = dmnTableIndex;
-    }
-    public int getBatchSize() {
-      return batchSize;
+    public Integer getBatchSize() {
+      return isSplitByTable() ? batchSize : null;
     }
     public void setBatchSize(int batchSize) {
       this.batchSize = batchSize;
@@ -266,33 +237,24 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
   }
 
   public static class UpdateResult {
-    protected int remainingBatchSize;
-    protected int processTableIndex;
-    protected int dmnTableIndex;
+    protected Map<Class<? extends DbEntity>, DbOperation> operations;
 
-    public UpdateResult(int remainingBatchSize, int processTableIndex, int dmnTableIndex) {
-      this.remainingBatchSize = remainingBatchSize;
-      this.processTableIndex = processTableIndex;
-      this.dmnTableIndex = dmnTableIndex;
+    public UpdateResult(Map<Class<? extends DbEntity>, DbOperation> operations) {
+      this.operations = operations;
     }
 
-    public int getRemainingBatchSize() {
-      return remainingBatchSize;
+    public Map<Class<? extends DbEntity>, DbOperation> getOperations() {
+      return operations;
     }
-    public void setRemainingBatchSize(int remainingBatchSize) {
-      this.remainingBatchSize = remainingBatchSize;
+
+    public UpdateResult addOperations(Map<Class<? extends DbEntity>, DbOperation> operations) {
+      this.operations.putAll(operations);
+      return this;
     }
-    public int getProcessTableIndex() {
-      return processTableIndex;
-    }
-    public void setProcessTableIndex(int processTableIndex) {
-      this.processTableIndex = processTableIndex;
-    }
-    public int getDmnTableIndex() {
-      return dmnTableIndex;
-    }
-    public void setDmnTableIndex(int dmnTableIndex) {
-      this.dmnTableIndex = dmnTableIndex;
+
+    public boolean isInstanceCompleted(CommandContext commandContext) {
+      final int batchSize = HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext);
+      return this.operations.values().stream().noneMatch(op -> op.getRowsAffected() == batchSize);
     }
   }
 }

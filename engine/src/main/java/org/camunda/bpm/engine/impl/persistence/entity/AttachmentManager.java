@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
 import org.camunda.bpm.engine.impl.db.entitymanager.operation.DbOperation;
 import org.camunda.bpm.engine.impl.persistence.AbstractHistoricManager;
@@ -44,21 +43,21 @@ public class AttachmentManager extends AbstractHistoricManager {
     return getDbEntityManager().selectList("selectAttachmentsByTaskId", taskId);
   }
 
-  public void addRemovalTimeToAttachmentsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToAttachmentsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
 
-    getDbEntityManager()
+    return getDbEntityManager()
       .updatePreserveOrder(AttachmentEntity.class, "updateAttachmentsByRootProcessInstanceId", parameters);
   }
 
-  public void addRemovalTimeToAttachmentsByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToAttachmentsByProcessInstanceId(String processInstanceId, Date removalTime) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
 
-    getDbEntityManager()
+    return getDbEntityManager()
       .updatePreserveOrder(AttachmentEntity.class, "updateAttachmentsByProcessInstanceId", parameters);
 
   }

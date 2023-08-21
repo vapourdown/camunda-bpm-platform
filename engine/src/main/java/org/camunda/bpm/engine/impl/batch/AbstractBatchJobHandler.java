@@ -33,7 +33,6 @@ import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayManager;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.JobEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.JobManager;
-import org.camunda.bpm.engine.impl.persistence.entity.MessageEntity;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.camunda.bpm.engine.impl.util.JsonUtil;
 
@@ -45,7 +44,7 @@ import org.camunda.bpm.engine.impl.util.JsonUtil;
 public abstract class AbstractBatchJobHandler<T extends BatchConfiguration> implements BatchJobHandler<T>, OptimisticLockingListener {
 
   @Override
-  public abstract JobDeclaration<BatchJobContext, MessageEntity> getJobDeclaration();
+  public abstract JobDeclaration<BatchJobContext, ? extends JobEntity> getJobDeclaration();
 
   @Override
   public boolean createJobs(BatchEntity batch) {
@@ -114,6 +113,8 @@ public abstract class AbstractBatchJobHandler<T extends BatchConfiguration> impl
     }
 
     executeHandler(batchConfiguration, execution, commandContext, tenantId);
+
+    commandContext.getByteArrayManager().delete(byteArray);
   }
 
   protected abstract void executeHandler(final T configuration,

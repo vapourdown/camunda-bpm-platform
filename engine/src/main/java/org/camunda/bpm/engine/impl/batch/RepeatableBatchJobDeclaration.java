@@ -21,12 +21,11 @@ import org.camunda.bpm.engine.impl.core.variable.mapping.value.ConstantValueProv
 import org.camunda.bpm.engine.impl.core.variable.mapping.value.ParameterValueProvider;
 import org.camunda.bpm.engine.impl.jobexecutor.JobDeclaration;
 import org.camunda.bpm.engine.impl.jobexecutor.JobHandlerConfiguration;
+import org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.MessageEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.RepeatableBatchJobEntity;
 
 
-public class RepeatableBatchJobDeclaration extends JobDeclaration<BatchJobContext, MessageEntity> {
+public class RepeatableBatchJobDeclaration extends JobDeclaration<BatchJobContext, EverLivingJobEntity> {
 
   public RepeatableBatchJobDeclaration(String jobHandlerType) {
     super(jobHandlerType);
@@ -38,8 +37,8 @@ public class RepeatableBatchJobDeclaration extends JobDeclaration<BatchJobContex
   }
 
   @Override
-  protected MessageEntity newJobInstance(BatchJobContext context) {
-    return new RepeatableBatchJobEntity();
+  protected EverLivingJobEntity newJobInstance(BatchJobContext context) {
+    return new EverLivingJobEntity();
   }
 
   @Override
@@ -57,6 +56,13 @@ public class RepeatableBatchJobDeclaration extends JobDeclaration<BatchJobContex
     long batchJobPriority = Context.getProcessEngineConfiguration()
         .getBatchJobPriority();
     return new ConstantValueProvider(batchJobPriority);
+  }
+
+  @Override
+  public EverLivingJobEntity reconfigure(BatchJobContext context, EverLivingJobEntity job) {
+    super.reconfigure(context, job);
+    job.setJobHandlerConfiguration(new BatchJobConfiguration(context.getConfiguration().getId()));
+    return job;
   }
 
 }

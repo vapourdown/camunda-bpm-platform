@@ -35,6 +35,7 @@ public class EverLivingJobEntity extends JobEntity {
 
   public static final String TYPE = "ever-living";
 
+  @Override
   public String getType() {
     return TYPE;
   }
@@ -42,20 +43,22 @@ public class EverLivingJobEntity extends JobEntity {
   @Override
   protected void postExecute(CommandContext commandContext) {
     LOG.debugJobExecuted(this);
-    init(commandContext);
+    init(commandContext, false, true);
     commandContext.getHistoricJobLogManager().fireJobSuccessfulEvent(this);
   }
 
   @Override
   public void init(CommandContext commandContext) {
-    init(commandContext, false);
+    init(commandContext, false, false);
   }
 
-  public void init(CommandContext commandContext, boolean shouldResetLock) {
-    // clean additional data related to this job
-    JobHandler jobHandler = getJobHandler();
-    if (jobHandler != null) {
-      jobHandler.onDelete(getJobHandlerConfiguration(), this);
+  public void init(CommandContext commandContext, boolean shouldResetLock, boolean shouldCallDeleteHandler) {
+    if (shouldCallDeleteHandler) {
+      // clean additional data related to this job
+      JobHandler jobHandler = getJobHandler();
+      if (jobHandler != null) {
+        jobHandler.onDelete(getJobHandlerConfiguration(), this);
+      }
     }
 
     //cancel the retries -> will resolve job incident if present

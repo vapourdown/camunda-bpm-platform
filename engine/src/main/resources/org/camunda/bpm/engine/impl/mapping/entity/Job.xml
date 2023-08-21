@@ -151,6 +151,10 @@
     <result property="repeat" column="REPEAT_" jdbcType="VARCHAR" />
     <result property="repeatOffset" column="REPEAT_OFFSET_" jdbcType="BIGINT" />
   </resultMap>
+  
+  <resultMap id="repeatableBatchResultMap" type="org.camunda.bpm.engine.impl.persistence.entity.RepeatableBatchJobEntity" extends="jobResultMap">
+    <result property="repeat" column="REPEAT_" jdbcType="VARCHAR" />
+  </resultMap>
 
   <resultMap id="acquirableJobResultMap" type="org.camunda.bpm.engine.impl.persistence.entity.AcquirableJobEntity">
     <id property="id" column="ID_" jdbcType="VARCHAR" />
@@ -637,100 +641,187 @@
       and REV_ = #{revision, jdbcType=INTEGER}
   </update>
 
-    <insert id="insertEverLivingJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity">
-        insert into ${prefix}ACT_RU_JOB (
-        ID_,
-        TYPE_,
-        LOCK_OWNER_,
-        LOCK_EXP_TIME_,
-        EXCLUSIVE_,
-        EXECUTION_ID_,
-        PROCESS_INSTANCE_ID_,
-        PROCESS_DEF_ID_,
-        PROCESS_DEF_KEY_,
-        RETRIES_,
-        EXCEPTION_STACK_ID_,
-        EXCEPTION_MSG_,
-        FAILED_ACT_ID_,
-        DUEDATE_,
-        HANDLER_TYPE_,
-        HANDLER_CFG_,
-        DEPLOYMENT_ID_,
-        SUSPENSION_STATE_,
-        JOB_DEF_ID_,
-        PRIORITY_,
-        SEQUENCE_COUNTER_,
-        TENANT_ID_,
-        CREATE_TIME_,
-        REV_
-        )
-        values (#{id, jdbcType=VARCHAR},
-        'ever-living',
-        #{lockOwner, jdbcType=VARCHAR},
-        #{lockExpirationTime, jdbcType=TIMESTAMP},
-        #{exclusive, jdbcType=BOOLEAN},
-        #{executionId, jdbcType=VARCHAR},
-        #{processInstanceId, jdbcType=VARCHAR},
-        #{processDefinitionId, jdbcType=VARCHAR},
-        #{processDefinitionKey, jdbcType=VARCHAR},
-        #{retries, jdbcType=INTEGER},
-        #{exceptionByteArrayId, jdbcType=VARCHAR},
-        #{exceptionMessage, jdbcType=VARCHAR},
-        #{failedActivityId, jdbcType=VARCHAR},
-        #{duedate, jdbcType=TIMESTAMP},
-        #{jobHandlerType, jdbcType=VARCHAR},
-        #{jobHandlerConfigurationRaw, jdbcType=VARCHAR},
-        #{deploymentId, jdbcType=VARCHAR},
-        #{suspensionState, jdbcType=INTEGER},
-        #{jobDefinitionId, jdbcType=VARCHAR},
-        #{priority, jdbcType=BIGINT},
-        #{sequenceCounter, jdbcType=BIGINT},
-        #{tenantId, jdbcType=VARCHAR},
-        #{createTime, jdbcType=TIMESTAMP},
-        1
-        )
-    </insert>
-    <!-- MESSAGE UPDATE -->
+  <!-- CLEANUP INSERT -->
+  <insert id="insertEverLivingJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity">
+      insert into ${prefix}ACT_RU_JOB (
+      ID_,
+      TYPE_,
+      LOCK_OWNER_,
+      LOCK_EXP_TIME_,
+      EXCLUSIVE_,
+      EXECUTION_ID_,
+      PROCESS_INSTANCE_ID_,
+      PROCESS_DEF_ID_,
+      PROCESS_DEF_KEY_,
+      RETRIES_,
+      EXCEPTION_STACK_ID_,
+      EXCEPTION_MSG_,
+      FAILED_ACT_ID_,
+      DUEDATE_,
+      HANDLER_TYPE_,
+      HANDLER_CFG_,
+      DEPLOYMENT_ID_,
+      SUSPENSION_STATE_,
+      JOB_DEF_ID_,
+      PRIORITY_,
+      SEQUENCE_COUNTER_,
+      TENANT_ID_,
+      CREATE_TIME_,
+      REV_
+      )
+      values (#{id, jdbcType=VARCHAR},
+      'ever-living',
+      #{lockOwner, jdbcType=VARCHAR},
+      #{lockExpirationTime, jdbcType=TIMESTAMP},
+      #{exclusive, jdbcType=BOOLEAN},
+      #{executionId, jdbcType=VARCHAR},
+      #{processInstanceId, jdbcType=VARCHAR},
+      #{processDefinitionId, jdbcType=VARCHAR},
+      #{processDefinitionKey, jdbcType=VARCHAR},
+      #{retries, jdbcType=INTEGER},
+      #{exceptionByteArrayId, jdbcType=VARCHAR},
+      #{exceptionMessage, jdbcType=VARCHAR},
+      #{failedActivityId, jdbcType=VARCHAR},
+      #{duedate, jdbcType=TIMESTAMP},
+      #{jobHandlerType, jdbcType=VARCHAR},
+      #{jobHandlerConfigurationRaw, jdbcType=VARCHAR},
+      #{deploymentId, jdbcType=VARCHAR},
+      #{suspensionState, jdbcType=INTEGER},
+      #{jobDefinitionId, jdbcType=VARCHAR},
+      #{priority, jdbcType=BIGINT},
+      #{sequenceCounter, jdbcType=BIGINT},
+      #{tenantId, jdbcType=VARCHAR},
+      #{createTime, jdbcType=TIMESTAMP},
+      1
+      )
+  </insert>
+  <!-- CLEANUP UPDATE -->
 
-    <update id="updateEverLivingJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity">
-        update ${prefix}ACT_RU_JOB
-        <set>
-            REV_ =  #{revisionNext, jdbcType=INTEGER},
-            EXECUTION_ID_ = #{executionId, jdbcType=VARCHAR},
-            LOCK_EXP_TIME_ = #{lockExpirationTime, jdbcType=TIMESTAMP},
-            LOCK_OWNER_ = #{lockOwner, jdbcType=VARCHAR},
-            RETRIES_ = #{retries, jdbcType=INTEGER},
-            EXCEPTION_STACK_ID_ = #{exceptionByteArrayId, jdbcType=VARCHAR},
-            EXCEPTION_MSG_ = #{exceptionMessage, jdbcType=VARCHAR},
-            FAILED_ACT_ID_ = #{failedActivityId, jdbcType=VARCHAR},
-            DUEDATE_ = #{duedate, jdbcType=TIMESTAMP},
-            SUSPENSION_STATE_ = #{suspensionState, jdbcType=INTEGER},
-            PROCESS_DEF_ID_ = #{processDefinitionId, jdbcType=VARCHAR},
-            PROCESS_DEF_KEY_ = #{processDefinitionKey, jdbcType=VARCHAR},
-            JOB_DEF_ID_ = #{jobDefinitionId, jdbcType=VARCHAR},
-            DEPLOYMENT_ID_ = #{deploymentId, jdbcType=VARCHAR},
-            HANDLER_CFG_ = #{jobHandlerConfigurationRaw, jdbcType=VARCHAR},
-            PRIORITY_ = #{priority, jdbcType=BIGINT},
-            SEQUENCE_COUNTER_ = #{sequenceCounter, jdbcType=BIGINT},
-            LAST_FAILURE_LOG_ID_ = #{lastFailureLogId, jdbcType=VARCHAR}
-        </set>
-        where ID_= #{id, jdbcType=VARCHAR}
-        and REV_ = #{revision, jdbcType=INTEGER}
-    </update>
-
-    <!-- ACQUIRABLE JOB UPDATE -->
-    <update id="updateAcquirableJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.AcquirableJobEntity">
+  <update id="updateEverLivingJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity">
       update ${prefix}ACT_RU_JOB
       <set>
           REV_ =  #{revisionNext, jdbcType=INTEGER},
+          EXECUTION_ID_ = #{executionId, jdbcType=VARCHAR},
           LOCK_EXP_TIME_ = #{lockExpirationTime, jdbcType=TIMESTAMP},
           LOCK_OWNER_ = #{lockOwner, jdbcType=VARCHAR},
+          RETRIES_ = #{retries, jdbcType=INTEGER},
+          EXCEPTION_STACK_ID_ = #{exceptionByteArrayId, jdbcType=VARCHAR},
+          EXCEPTION_MSG_ = #{exceptionMessage, jdbcType=VARCHAR},
+          FAILED_ACT_ID_ = #{failedActivityId, jdbcType=VARCHAR},
           DUEDATE_ = #{duedate, jdbcType=TIMESTAMP},
-          PROCESS_INSTANCE_ID_ = #{processInstanceId, jdbcType=VARCHAR},
-          EXCLUSIVE_ = #{exclusive, jdbcType=BOOLEAN},
+          SUSPENSION_STATE_ = #{suspensionState, jdbcType=INTEGER},
+          PROCESS_DEF_ID_ = #{processDefinitionId, jdbcType=VARCHAR},
+          PROCESS_DEF_KEY_ = #{processDefinitionKey, jdbcType=VARCHAR},
+          JOB_DEF_ID_ = #{jobDefinitionId, jdbcType=VARCHAR},
+          DEPLOYMENT_ID_ = #{deploymentId, jdbcType=VARCHAR},
+          HANDLER_CFG_ = #{jobHandlerConfigurationRaw, jdbcType=VARCHAR},
+          PRIORITY_ = #{priority, jdbcType=BIGINT},
+          SEQUENCE_COUNTER_ = #{sequenceCounter, jdbcType=BIGINT},
+          LAST_FAILURE_LOG_ID_ = #{lastFailureLogId, jdbcType=VARCHAR}
       </set>
       where ID_= #{id, jdbcType=VARCHAR}
-        and REV_ = #{revision, jdbcType=INTEGER}
-    </update>
+      and REV_ = #{revision, jdbcType=INTEGER}
+  </update>
+  
+  <!-- REPEATABLE BATCH INSERT -->
+
+  <insert id="insertRepeatableBatchJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.RepeatableBatchJobEntity">
+    insert into ${prefix}ACT_RU_JOB (
+            ID_,
+            TYPE_,
+            LOCK_OWNER_,
+            LOCK_EXP_TIME_,
+            EXCLUSIVE_,
+            EXECUTION_ID_,
+            PROCESS_INSTANCE_ID_,
+            PROCESS_DEF_ID_,
+            PROCESS_DEF_KEY_,
+            RETRIES_,
+            EXCEPTION_STACK_ID_,
+            EXCEPTION_MSG_,
+            FAILED_ACT_ID_,
+            DUEDATE_,
+            HANDLER_TYPE_,
+            HANDLER_CFG_,
+            DEPLOYMENT_ID_,
+            SUSPENSION_STATE_,
+            JOB_DEF_ID_,
+            PRIORITY_,
+            REPEAT_,
+            SEQUENCE_COUNTER_,
+            TENANT_ID_,
+            CREATE_TIME_,
+            REV_
+            )
+    values (#{id, jdbcType=VARCHAR},
+            'message',
+            #{lockOwner, jdbcType=VARCHAR},
+            #{lockExpirationTime, jdbcType=TIMESTAMP},
+            #{exclusive, jdbcType=BOOLEAN},
+            #{executionId, jdbcType=VARCHAR},
+            #{processInstanceId, jdbcType=VARCHAR},
+            #{processDefinitionId, jdbcType=VARCHAR},
+            #{processDefinitionKey, jdbcType=VARCHAR},
+            #{retries, jdbcType=INTEGER},
+            #{exceptionByteArrayId, jdbcType=VARCHAR},
+            #{exceptionMessage, jdbcType=VARCHAR},
+            #{failedActivityId, jdbcType=VARCHAR},
+            #{duedate, jdbcType=TIMESTAMP},
+            #{jobHandlerType, jdbcType=VARCHAR},
+            #{jobHandlerConfigurationRaw, jdbcType=VARCHAR},
+            #{deploymentId, jdbcType=VARCHAR},
+            #{suspensionState, jdbcType=INTEGER},
+            #{jobDefinitionId, jdbcType=VARCHAR},
+            #{priority, jdbcType=BIGINT},
+            #{repeat, jdbcType=VARCHAR},
+            #{sequenceCounter, jdbcType=BIGINT},
+            #{tenantId, jdbcType=VARCHAR},
+            #{createTime, jdbcType=TIMESTAMP},
+            1
+    )
+  </insert>
+  <!-- REPEATABLE BATCH UPDATE -->
+
+  <update id="updateRepeatableBatchJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.RepeatableBatchJobEntity">
+    update ${prefix}ACT_RU_JOB
+    <set>
+       REV_ =  #{revisionNext, jdbcType=INTEGER},
+       EXECUTION_ID_ = #{executionId, jdbcType=VARCHAR},
+       LOCK_EXP_TIME_ = #{lockExpirationTime, jdbcType=TIMESTAMP},
+       LOCK_OWNER_ = #{lockOwner, jdbcType=VARCHAR},
+       RETRIES_ = #{retries, jdbcType=INTEGER},
+       EXCEPTION_STACK_ID_ = #{exceptionByteArrayId, jdbcType=VARCHAR},
+       EXCEPTION_MSG_ = #{exceptionMessage, jdbcType=VARCHAR},
+       FAILED_ACT_ID_ = #{failedActivityId, jdbcType=VARCHAR},
+       DUEDATE_ = #{duedate, jdbcType=TIMESTAMP},
+       SUSPENSION_STATE_ = #{suspensionState, jdbcType=INTEGER},
+       PROCESS_DEF_ID_ = #{processDefinitionId, jdbcType=VARCHAR},
+       PROCESS_DEF_KEY_ = #{processDefinitionKey, jdbcType=VARCHAR},
+       JOB_DEF_ID_ = #{jobDefinitionId, jdbcType=VARCHAR},
+       DEPLOYMENT_ID_ = #{deploymentId, jdbcType=VARCHAR},
+       HANDLER_CFG_ = #{jobHandlerConfigurationRaw, jdbcType=VARCHAR},
+       PRIORITY_ = #{priority, jdbcType=BIGINT},
+       REPEAT_ = #{repeat, jdbcType=VARCHAR},
+       SEQUENCE_COUNTER_ = #{sequenceCounter, jdbcType=BIGINT},
+       LAST_FAILURE_LOG_ID_ = #{lastFailureLogId, jdbcType=VARCHAR}
+    </set>
+    where ID_= #{id, jdbcType=VARCHAR}
+      and REV_ = #{revision, jdbcType=INTEGER}
+  </update>
+
+  <!-- ACQUIRABLE JOB UPDATE -->
+  <update id="updateAcquirableJob" parameterType="org.camunda.bpm.engine.impl.persistence.entity.AcquirableJobEntity">
+    update ${prefix}ACT_RU_JOB
+    <set>
+        REV_ =  #{revisionNext, jdbcType=INTEGER},
+        LOCK_EXP_TIME_ = #{lockExpirationTime, jdbcType=TIMESTAMP},
+        LOCK_OWNER_ = #{lockOwner, jdbcType=VARCHAR},
+        DUEDATE_ = #{duedate, jdbcType=TIMESTAMP},
+        PROCESS_INSTANCE_ID_ = #{processInstanceId, jdbcType=VARCHAR},
+        EXCLUSIVE_ = #{exclusive, jdbcType=BOOLEAN},
+    </set>
+    where ID_= #{id, jdbcType=VARCHAR}
+      and REV_ = #{revision, jdbcType=INTEGER}
+  </update>
 
 </mapper>

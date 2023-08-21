@@ -118,9 +118,17 @@
 
   <update id="updateHistoricActivityInstancesByProcessInstanceId"
           parameterType="java.util.Map">
-    update ${prefix}ACT_HI_ACTINST
+    update 
+    <if test="maxResults != null">
+      ${limitBeforeWithoutOffset}
+    </if>
+    ${prefix}ACT_HI_ACTINST
       set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
       where PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterWithoutOffset}
+      </if>
   </update>
 
   <update id="updateHistoricActivityInstancesByProcessInstanceId_mssql"

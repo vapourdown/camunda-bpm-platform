@@ -60,6 +60,17 @@ public interface SetRemovalTimeToHistoricProcessInstancesBuilder {
   SetRemovalTimeToHistoricProcessInstancesBuilder hierarchical();
 
   /**
+   * Processes removal time updates per table, taking into account defined limits. This
+   * can lead to multiple executions of the job to keep the transaction from timing out
+   * due to too many rows that would need to be updated within one transaction.
+   *
+   * @since 7.20
+   *
+   * @return the builder.
+   */
+  SetRemovalTimeToHistoricProcessInstancesBuilder splitByTable();
+
+  /**
    * Sets the removal time asynchronously as batch. The returned batch can be used to
    * track the progress of setting a removal time.
    *

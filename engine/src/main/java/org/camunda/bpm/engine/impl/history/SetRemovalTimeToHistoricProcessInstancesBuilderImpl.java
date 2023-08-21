@@ -90,7 +90,8 @@ public class SetRemovalTimeToHistoricProcessInstancesBuilderImpl implements SetR
     return this;
   }
 
-  public SetRemovalTimeToHistoricProcessInstancesBuilder splitByHistoryTable() {
+  @Override
+  public SetRemovalTimeToHistoricProcessInstancesBuilder splitByTable() {
     isSplitByHistoryTable = true;
     return this;
   }

@@ -34,12 +34,6 @@ public class RepeatableBatchJobEntity extends MessageEntity {
 
   public static final String TYPE = "repeatable-batch";
 
-  protected boolean doRepeat;
-
-  public void setDoRepeat(boolean doRepeat) {
-    this.doRepeat = doRepeat;
-  }
-
   @Override
   public String getType() {
     return TYPE;
@@ -48,11 +42,7 @@ public class RepeatableBatchJobEntity extends MessageEntity {
   @Override
   protected void postExecute(CommandContext commandContext) {
     LOG.debugJobExecuted(this);
-    if (!doRepeat) {
-      delete(true);
-    } else {
-      init(commandContext);
-    }
+    init(commandContext);
     commandContext.getHistoricJobLogManager().fireJobSuccessfulEvent(this);
   }
 
@@ -63,7 +53,7 @@ public class RepeatableBatchJobEntity extends MessageEntity {
 
   public void init(CommandContext commandContext, boolean shouldResetLock) {
     // clear repeat instruction
-    doRepeat = false;
+    setRepeat(null);
 
     //cancel the retries -> will resolve job incident if present
     int retries = HistoryCleanupHelper.getMaxRetries();
@@ -95,7 +85,7 @@ public class RepeatableBatchJobEntity extends MessageEntity {
            + ", retries=" + retries
            + ", jobHandlerType=" + jobHandlerType
            + ", jobHandlerConfiguration=" + jobHandlerConfiguration
-           + ", doRepeat=" + doRepeat
+           + ", repeat=" + getRepeat()
            + ", exceptionByteArray=" + exceptionByteArray
            + ", exceptionByteArrayId=" + exceptionByteArrayId
            + ", exceptionMessage=" + exceptionMessage

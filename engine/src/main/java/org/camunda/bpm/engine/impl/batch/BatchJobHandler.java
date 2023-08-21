@@ -18,7 +18,7 @@ package org.camunda.bpm.engine.impl.batch;
 
 import org.camunda.bpm.engine.impl.jobexecutor.JobDeclaration;
 import org.camunda.bpm.engine.impl.jobexecutor.JobHandler;
-import org.camunda.bpm.engine.impl.persistence.entity.MessageEntity;
+import org.camunda.bpm.engine.impl.persistence.entity.JobEntity;
 
 /**
  * A batch job handler manages batch jobs based
@@ -49,7 +49,7 @@ public interface BatchJobHandler<T> extends JobHandler<BatchJobConfiguration> {
    *
    * @return the batch job declaration
    */
-  JobDeclaration<?, MessageEntity> getJobDeclaration();
+  JobDeclaration<?, ? extends JobEntity> getJobDeclaration();
 
   /**
    * Creates batch jobs for a batch.
