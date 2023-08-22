@@ -23,7 +23,6 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
 import org.camunda.bpm.engine.DecisionService;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.IdentityService;
@@ -114,7 +113,7 @@ public class BatchSetRemovalTimeUserOperationLogTest {
     List<UserOperationLogEntry> userOperationLogEntries = historyService.createUserOperationLogQuery().list();
 
     // then
-    assertProperties(userOperationLogEntries, "mode", "removalTime", "hierarchical", "nrOfInstances", "async");
+    assertProperties(userOperationLogEntries, "mode", "removalTime", "hierarchical", "nrOfInstances", "async", "useRowLimit");
     assertOperationType(userOperationLogEntries, "SetRemovalTime");
     assertCategory(userOperationLogEntries, "Operator");
     assertEntityType(userOperationLogEntries, "ProcessInstance");

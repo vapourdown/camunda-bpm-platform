@@ -19,6 +19,7 @@ package org.camunda.bpm.engine.impl.batch.removaltime;
 import static org.camunda.bpm.engine.ProcessEngineConfiguration.HISTORY_REMOVAL_TIME_STRATEGY_END;
 import static org.camunda.bpm.engine.ProcessEngineConfiguration.HISTORY_REMOVAL_TIME_STRATEGY_START;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -52,18 +53,20 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
                              ExecutionEntity execution,
                              CommandContext commandContext,
                              String tenantId) {
+    UpdateResult updateResult = new UpdateResult(Collections.emptyMap());
     if (batchConfiguration.isUseRowLimit()) {
       // only one instance allowed if enabled
       String instanceId = batchConfiguration.getIds().get(0);
-      String currentJobId = commandContext.getCurrentJob().getId();
       Integer batchSize = HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext);
-      CommandExecutor newCommandExecutor = commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew();
-      UpdateResult updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, batchSize, commandContext);
-      TransactionListener transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, currentJobId, newCommandExecutor);
-      commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, transactionResulthandler);
+      updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, batchSize, commandContext);
     } else {
       batchConfiguration.getIds().forEach(id -> addRemovalTimeToInstance(id, batchConfiguration, null, commandContext));
     }
+    // handle ever living job entity in transaction handler
+    String currentJobId = commandContext.getCurrentJob().getId();
+    CommandExecutor newCommandExecutor = commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew();
+    TransactionListener transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, currentJobId, newCommandExecutor);
+    commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, transactionResulthandler);
   }
 
   protected UpdateResult addRemovalTimeToInstance(String instanceId, SetRemovalTimeBatchConfiguration batchConfiguration, Integer batchSize, CommandContext commandContext) {

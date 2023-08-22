@@ -39,10 +39,10 @@ public class ProcessSetRemovalTimeResultHandler implements TransactionListener {
   public void execute(CommandContext commandContext) {
     commandExecutor.execute(context -> {
         EverLivingJobEntity job = (EverLivingJobEntity) context.getJobManager().findJobById(jobId);
-        if (!updateResult.isInstanceCompleted(context)) {
-          context.getJobManager().reschedule(job, ClockUtil.getCurrentTime());
-        } else {
+        if (updateResult.isInstanceCompleted(context)) {
           job.delete(true);
+        } else {
+          context.getJobManager().reschedule(job, ClockUtil.getCurrentTime());
         }
         return null;
     });

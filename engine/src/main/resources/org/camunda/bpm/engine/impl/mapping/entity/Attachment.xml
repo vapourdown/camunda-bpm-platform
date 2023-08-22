@@ -46,9 +46,6 @@
 
   <update id="updateAttachment" parameterType="org.camunda.bpm.engine.impl.persistence.entity.AttachmentEntity">
     update
-    <if test="maxResults != null">
-      ${limitBeforeWithoutOffset}
-    </if>
     ${prefix}ACT_HI_ATTACHMENT 
     set
       REV_ = #{revisionNext, jdbcType=INTEGER},
