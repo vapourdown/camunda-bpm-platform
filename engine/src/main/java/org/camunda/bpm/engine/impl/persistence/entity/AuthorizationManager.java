@@ -1167,10 +1167,11 @@ public class AuthorizationManager extends AbstractManager {
   }
 
   public DbOperation addRemovalTimeToAuthorizationsByRootProcessInstanceId(String rootProcessInstanceId,
-                                                                    Date removalTime) {
+                                                                    Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
         .updatePreserveOrder(AuthorizationEntity.class,
@@ -1178,10 +1179,11 @@ public class AuthorizationManager extends AbstractManager {
   }
 
   public DbOperation addRemovalTimeToAuthorizationsByProcessInstanceId(String processInstanceId,
-                                                                Date removalTime) {
+                                                                Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
         .updatePreserveOrder(AuthorizationEntity.class,

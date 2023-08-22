@@ -75,10 +75,11 @@ public class HistoricActivityInstanceManager extends AbstractHistoricManager {
     getTenantManager().configureQuery(query);
   }
 
-  public DbOperation addRemovalTimeToActivityInstancesByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToActivityInstancesByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricActivityInstanceEventEntity.class, "updateHistoricActivityInstancesByRootProcessInstanceId", parameters);

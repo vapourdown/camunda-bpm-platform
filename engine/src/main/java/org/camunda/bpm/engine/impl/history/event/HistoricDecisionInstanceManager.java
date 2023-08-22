@@ -313,6 +313,7 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     addOperation(getDbEntityManager()
       .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByRootProcessInstanceId", parameters), updateOperations);
@@ -336,6 +337,7 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     addOperation(getDbEntityManager()
       .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByProcessInstanceId", parameters), updateOperations);

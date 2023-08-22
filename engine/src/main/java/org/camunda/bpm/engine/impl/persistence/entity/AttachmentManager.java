@@ -43,19 +43,21 @@ public class AttachmentManager extends AbstractHistoricManager {
     return getDbEntityManager().selectList("selectAttachmentsByTaskId", taskId);
   }
 
-  public DbOperation addRemovalTimeToAttachmentsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToAttachmentsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(AttachmentEntity.class, "updateAttachmentsByRootProcessInstanceId", parameters);
   }
 
-  public DbOperation addRemovalTimeToAttachmentsByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToAttachmentsByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(AttachmentEntity.class, "updateAttachmentsByProcessInstanceId", parameters);

@@ -79,19 +79,21 @@ public class UserOperationLogManager extends AbstractHistoricManager {
     return getDbEntityManager().selectList("selectUserOperationLogEntriesByQueryCriteria", query, page);
   }
 
-  public DbOperation addRemovalTimeToUserOperationLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToUserOperationLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(UserOperationLogEntryEventEntity.class, "updateUserOperationLogByRootProcessInstanceId", parameters);
   }
 
-  public DbOperation addRemovalTimeToUserOperationLogByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToUserOperationLogByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(UserOperationLogEntryEventEntity.class, "updateUserOperationLogByProcessInstanceId", parameters);

@@ -85,33 +85,65 @@
 
   <update id="updateHistoricDecisionInstancesByRootProcessInstanceId"
           parameterType="java.util.Map">
-      update ${prefix}ACT_HI_DECINST set
+      update
+      <if test="maxResults != null">
+        ${limitBeforeWithoutOffset}
+      </if>
+      ${prefix}ACT_HI_DECINST set
       REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
 
       where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterWithoutOffset}
+      </if>
   </update>
 
   <update id="updateHistoricDecisionInstancesByRootProcessInstanceId_mssql"
           parameterType="java.util.Map">
-    update RES set
+    update
+    <if test="maxResults != null">
+      ${limitBeforeWithoutOffset}
+    </if>
+    RES set
     RES.REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
     FROM ${prefix}ACT_HI_DECINST RES WITH (FORCESEEK)
     where RES.ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+    <if test="maxResults != null">
+      and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+      ${limitAfterWithoutOffset}
+    </if>
   </update>
 
   <update id="updateHistoricDecisionInstancesByProcessInstanceId"
           parameterType="java.util.Map">
-    update ${prefix}ACT_HI_DECINST
+    update
+    <if test="maxResults != null">
+      ${limitBeforeWithoutOffset}
+    </if>
+    ${prefix}ACT_HI_DECINST
       set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
       where PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterWithoutOffset}
+      </if>
   </update>
 
   <update id="updateHistoricDecisionInstancesByProcessInstanceId_mssql"
           parameterType="java.util.Map">
-    update RES
+    update
+    <if test="maxResults != null">
+      ${limitBeforeWithoutOffset}
+    </if>
+    RES
     set RES.REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
     FROM ${prefix}ACT_HI_DECINST RES WITH (FORCESEEK)
     where RES.PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+    <if test="maxResults != null">
+      and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+      ${limitAfterWithoutOffset}
+    </if>
   </update>
 
   <update id="updateHistoricDecisionInstancesByRootDecisionInstanceId"

@@ -171,49 +171,50 @@ public class HistoricProcessInstanceManager extends AbstractHistoricManager {
     Map<Class<? extends DbEntity>, DbOperation> updateOperations = new HashMap<>();
 
     addOperation(commandContext.getHistoricActivityInstanceManager()
-      .addRemovalTimeToActivityInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToActivityInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getHistoricTaskInstanceManager()
-      .addRemovalTimeToTaskInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToTaskInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getHistoricVariableInstanceManager()
-      .addRemovalTimeToVariableInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToVariableInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getHistoricDetailManager()
-      .addRemovalTimeToDetailsByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToDetailsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getHistoricIncidentManager()
-      .addRemovalTimeToIncidentsByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToIncidentsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getHistoricExternalTaskLogManager()
-      .addRemovalTimeToExternalTaskLogByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToExternalTaskLogByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getHistoricJobLogManager()
-      .addRemovalTimeToJobLogByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToJobLogByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getOperationLogManager()
-      .addRemovalTimeToUserOperationLogByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToUserOperationLogByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getHistoricIdentityLinkManager()
-      .addRemovalTimeToIdentityLinkLogByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToIdentityLinkLogByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getCommentManager()
-      .addRemovalTimeToCommentsByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToCommentsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getAttachmentManager()
-      .addRemovalTimeToAttachmentsByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToAttachmentsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     addOperation(commandContext.getByteArrayManager()
-      .addRemovalTimeToByteArraysByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+      .addRemovalTimeToByteArraysByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
 
     if (isEnableHistoricInstancePermissions()) {
       addOperation(commandContext.getAuthorizationManager()
-          .addRemovalTimeToAuthorizationsByRootProcessInstanceId(rootProcessInstanceId, removalTime), updateOperations);
+          .addRemovalTimeToAuthorizationsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize), updateOperations);
     }
 
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     addOperation(getDbEntityManager()
       .updatePreserveOrder(HistoricProcessInstanceEventEntity.class, "updateHistoricProcessInstanceEventsByRootProcessInstanceId", parameters), updateOperations);
@@ -233,52 +234,52 @@ public class HistoricProcessInstanceManager extends AbstractHistoricManager {
     addOperation(commandContext.getHistoricActivityInstanceManager()
       .addRemovalTimeToActivityInstancesByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
 
-//    addOperation(commandContext.getHistoricTaskInstanceManager()
-//      .addRemovalTimeToTaskInstancesByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getHistoricVariableInstanceManager()
-//      .addRemovalTimeToVariableInstancesByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getHistoricDetailManager()
-//      .addRemovalTimeToDetailsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getHistoricIncidentManager()
-//      .addRemovalTimeToIncidentsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getHistoricExternalTaskLogManager()
-//      .addRemovalTimeToExternalTaskLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getHistoricJobLogManager()
-//      .addRemovalTimeToJobLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getOperationLogManager()
-//      .addRemovalTimeToUserOperationLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getHistoricIdentityLinkManager()
-//      .addRemovalTimeToIdentityLinkLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getCommentManager()
-//      .addRemovalTimeToCommentsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getAttachmentManager()
-//      .addRemovalTimeToAttachmentsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    addOperation(commandContext.getByteArrayManager()
-//      .addRemovalTimeToByteArraysByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//
-//    if (isEnableHistoricInstancePermissions()) {
-//      addOperation(commandContext.getAuthorizationManager()
-//          .addRemovalTimeToAuthorizationsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
-//    }
-//
-//    Map<String, Object> parameters = new HashMap<>();
-//    parameters.put("processInstanceId", processInstanceId);
-//    parameters.put("removalTime", removalTime);
-//    parameters.put("maxResults", batchSize);
-//
-//
-//    addOperation(getDbEntityManager()
-//      .updatePreserveOrder(HistoricProcessInstanceEventEntity.class, "updateHistoricProcessInstanceByProcessInstanceId", parameters), updateOperations);
+    addOperation(commandContext.getHistoricTaskInstanceManager()
+      .addRemovalTimeToTaskInstancesByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getHistoricVariableInstanceManager()
+      .addRemovalTimeToVariableInstancesByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getHistoricDetailManager()
+      .addRemovalTimeToDetailsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getHistoricIncidentManager()
+      .addRemovalTimeToIncidentsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getHistoricExternalTaskLogManager()
+      .addRemovalTimeToExternalTaskLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getHistoricJobLogManager()
+      .addRemovalTimeToJobLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getOperationLogManager()
+      .addRemovalTimeToUserOperationLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getHistoricIdentityLinkManager()
+      .addRemovalTimeToIdentityLinkLogByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getCommentManager()
+      .addRemovalTimeToCommentsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getAttachmentManager()
+      .addRemovalTimeToAttachmentsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    addOperation(commandContext.getByteArrayManager()
+      .addRemovalTimeToByteArraysByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+
+    if (isEnableHistoricInstancePermissions()) {
+      addOperation(commandContext.getAuthorizationManager()
+          .addRemovalTimeToAuthorizationsByProcessInstanceId(processInstanceId, removalTime, batchSize), updateOperations);
+    }
+
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("processInstanceId", processInstanceId);
+    parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
+
+
+    addOperation(getDbEntityManager()
+      .updatePreserveOrder(HistoricProcessInstanceEventEntity.class, "updateHistoricProcessInstanceByProcessInstanceId", parameters), updateOperations);
 
     return new UpdateResult(updateOperations);
   }

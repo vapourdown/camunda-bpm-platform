@@ -48,19 +48,21 @@ public class HistoricIdentityLinkLogManager extends AbstractHistoricManager {
     return getDbEntityManager().selectList("selectHistoricIdentityLinkByQueryCriteria", query, page);
   }
 
-  public DbOperation addRemovalTimeToIdentityLinkLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToIdentityLinkLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricIdentityLinkLogEventEntity.class, "updateIdentityLinkLogByRootProcessInstanceId", parameters);
   }
 
-  public DbOperation addRemovalTimeToIdentityLinkLogByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToIdentityLinkLogByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricIdentityLinkLogEventEntity.class, "updateIdentityLinkLogByProcessInstanceId", parameters);

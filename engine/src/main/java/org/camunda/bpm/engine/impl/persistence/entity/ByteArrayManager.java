@@ -46,19 +46,21 @@ public class ByteArrayManager extends AbstractManager {
     getDbEntityManager().insert(arr);
   }
 
-  public DbOperation addRemovalTimeToByteArraysByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToByteArraysByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(ByteArrayEntity.class, "updateByteArraysByRootProcessInstanceId", parameters);
   }
 
-  public List<DbOperation> addRemovalTimeToByteArraysByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public List<DbOperation> addRemovalTimeToByteArraysByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     // Make individual statements for each entity type that references byte arrays.
     // This can lead to query plans that involve less aggressive locking by databases (e.g. DB2).

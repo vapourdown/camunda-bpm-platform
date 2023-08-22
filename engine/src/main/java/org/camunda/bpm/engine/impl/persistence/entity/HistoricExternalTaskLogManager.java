@@ -60,19 +60,21 @@ public class HistoricExternalTaskLogManager extends AbstractManager {
 
   // update ///////////////////////////////////////////////////////////////////
 
-  public DbOperation addRemovalTimeToExternalTaskLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToExternalTaskLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricExternalTaskLogEntity.class, "updateExternalTaskLogByRootProcessInstanceId", parameters);
   }
 
-  public DbOperation addRemovalTimeToExternalTaskLogByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToExternalTaskLogByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricExternalTaskLogEntity.class, "updateExternalTaskLogByProcessInstanceId", parameters);

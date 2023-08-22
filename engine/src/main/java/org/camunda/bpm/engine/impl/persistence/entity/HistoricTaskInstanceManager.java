@@ -183,19 +183,21 @@ public class HistoricTaskInstanceManager extends AbstractHistoricManager {
     }
   }
 
-  public DbOperation addRemovalTimeToTaskInstancesByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToTaskInstancesByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricTaskInstanceEventEntity.class, "updateHistoricTaskInstancesByRootProcessInstanceId", parameters);
   }
 
-  public DbOperation addRemovalTimeToTaskInstancesByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToTaskInstancesByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricTaskInstanceEventEntity.class, "updateHistoricTaskInstancesByProcessInstanceId", parameters);

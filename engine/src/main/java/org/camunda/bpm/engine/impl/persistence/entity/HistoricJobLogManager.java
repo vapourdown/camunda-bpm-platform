@@ -67,19 +67,21 @@ public class HistoricJobLogManager extends AbstractHistoricManager {
 
   // update ///////////////////////////////////////////////////////////////////
 
-  public DbOperation addRemovalTimeToJobLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToJobLogByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("rootProcessInstanceId", rootProcessInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricJobLogEventEntity.class, "updateJobLogByRootProcessInstanceId", parameters);
   }
 
-  public DbOperation addRemovalTimeToJobLogByProcessInstanceId(String processInstanceId, Date removalTime) {
+  public DbOperation addRemovalTimeToJobLogByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("processInstanceId", processInstanceId);
     parameters.put("removalTime", removalTime);
+    parameters.put("maxResults", batchSize);
 
     return getDbEntityManager()
       .updatePreserveOrder(HistoricJobLogEventEntity.class, "updateJobLogByProcessInstanceId", parameters);
