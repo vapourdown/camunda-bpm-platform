@@ -68,7 +68,7 @@ public interface SetRemovalTimeToHistoricProcessInstancesBuilder {
    *
    * @return the builder.
    */
-  SetRemovalTimeToHistoricProcessInstancesBuilder splitByTable();
+  SetRemovalTimeToHistoricProcessInstancesBuilder useRowLimit();
 
   /**
    * Sets the removal time asynchronously as batch. The returned batch can be used to

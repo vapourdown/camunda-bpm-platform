@@ -20,6 +20,8 @@ import com.google.gson.JsonElement;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.db.DbEntity;
 import org.camunda.bpm.engine.impl.db.entitymanager.OptimisticLockingListener;
@@ -248,6 +250,18 @@ public abstract class AbstractBatchJobHandler<T extends BatchConfiguration> impl
       return OptimisticLockingResult.IGNORE;
     }
     return OptimisticLockingResult.THROW;
+  }
+
+  @Override
+  public int calculateInvocationsPerBatchJob(String batchType, T configuration) {
+    ProcessEngineConfigurationImpl engineConfig = Context.getProcessEngineConfiguration();
+    Map<String, Integer> invocationsPerBatchJobByBatchType = engineConfig.getInvocationsPerBatchJobByBatchType();
+    Integer invocationCount = invocationsPerBatchJobByBatchType.get(batchType);
+    if (invocationCount != null) {
+      return invocationCount;
+    } else {
+      return engineConfig.getInvocationsPerBatchJob();
+    }
   }
 
 }

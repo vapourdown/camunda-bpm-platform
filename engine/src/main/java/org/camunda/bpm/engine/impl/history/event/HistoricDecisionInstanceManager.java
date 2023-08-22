@@ -32,7 +32,6 @@ import org.camunda.bpm.engine.history.HistoricDecisionOutputInstance;
 import org.camunda.bpm.engine.impl.CleanableHistoricDecisionInstanceReportImpl;
 import org.camunda.bpm.engine.impl.HistoricDecisionInstanceQueryImpl;
 import org.camunda.bpm.engine.impl.Page;
-import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateContext;
 import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateResult;
 import org.camunda.bpm.engine.impl.db.DbEntity;
 import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
@@ -305,10 +304,10 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
   }
 
   public void addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
-    addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, new UpdateContext());
+    addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, null);
   }
 
-  public UpdateResult addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, UpdateContext updateContext) {
+  public UpdateResult addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     Map<Class<? extends DbEntity>, DbOperation> updateOperations = new HashMap<>();
 
     Map<String, Object> parameters = new HashMap<>();
@@ -328,10 +327,10 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
   }
 
   public void addRemovalTimeToDecisionsByProcessInstanceId(String processInstanceId, Date removalTime) {
-    addRemovalTimeToDecisionsByProcessInstanceId(processInstanceId, removalTime, new UpdateContext());
+    addRemovalTimeToDecisionsByProcessInstanceId(processInstanceId, removalTime, null);
   }
 
-  public UpdateResult addRemovalTimeToDecisionsByProcessInstanceId(String processInstanceId, Date removalTime, UpdateContext updateContext) {
+  public UpdateResult addRemovalTimeToDecisionsByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
     Map<Class<? extends DbEntity>, DbOperation> updateOperations = new HashMap<>();
 
     Map<String, Object> parameters = new HashMap<>();

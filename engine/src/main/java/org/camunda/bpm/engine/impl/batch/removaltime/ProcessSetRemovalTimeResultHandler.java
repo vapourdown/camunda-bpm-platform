@@ -45,24 +45,11 @@ public class ProcessSetRemovalTimeResultHandler implements TransactionListener {
   @Override
   public void execute(CommandContext commandContext) {
     commandExecutor.execute(context -> {
-        boolean rescheduleJob = true;
-        int processIdIndex = batchConfiguration.getProcessIdIndex();
         EverLivingJobEntity job = (EverLivingJobEntity) context.getJobManager().findJobById(jobId);
-        if (updateResult.isInstanceCompleted(context)) {
-          // current instance done, next instance
-          if (processIdIndex < batchConfiguration.getIds().size() - 1) {
-            batchConfiguration.setProcessIdIndex(processIdIndex + 1);
-          } else {
-            // no next instance available anymore, we're done
-            rescheduleJob = false;
-          }
-        }
-
-        if (rescheduleJob) {
-          // update configuration byte array id
+        if (!updateResult.isInstanceCompleted(context)) {
+          // save configuration as byte array entity, deleted after each job execution
           ByteArrayEntity newConfiguration = saveConfiguration(context.getByteArrayManager(), batchConfiguration);
           ProcessSetRemovalTimeJobHandler.JOB_DECLARATION.reconfigure(new BatchJobContext(null, newConfiguration), job);
-          // ((MessageEntity) job).setRepeat("true");
           context.getJobManager().reschedule(job, ClockUtil.getCurrentTime());
         } else {
           job.delete(true);

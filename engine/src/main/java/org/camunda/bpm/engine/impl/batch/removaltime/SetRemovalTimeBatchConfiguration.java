@@ -29,10 +29,7 @@ public class SetRemovalTimeBatchConfiguration extends BatchConfiguration {
   protected Date removalTime;
   protected boolean hasRemovalTime;
   protected boolean isHierarchical;
-  protected boolean isSplitByHistoryTable;
-  protected int processTableIndex;
-  protected int dmnTableIndex;
-  protected int processIdIndex;
+  protected boolean useRowLimit;
 
   public SetRemovalTimeBatchConfiguration(List<String> ids) {
     this(ids, null);
@@ -69,39 +66,13 @@ public class SetRemovalTimeBatchConfiguration extends BatchConfiguration {
     return this;
   }
 
-  public boolean isSplitByHistoryTable() {
-    return isSplitByHistoryTable;
+  public boolean isUseRowLimit() {
+    return useRowLimit;
   }
 
-  public SetRemovalTimeBatchConfiguration setSplitByHistoryTable(boolean isSplitByHistoryTable) {
-    this.isSplitByHistoryTable = isSplitByHistoryTable;
+  public SetRemovalTimeBatchConfiguration setUseRowLimit(boolean useRowLimit) {
+    this.useRowLimit = useRowLimit;
     return this;
   }
 
-  public int getProcessTableIndex() {
-    return processTableIndex;
-  }
-
-  public SetRemovalTimeBatchConfiguration setProcessTableIndex(int processTableIndex) {
-    this.processTableIndex = processTableIndex;
-    return this;
-  }
-
-  public int getDmnTableIndex() {
-    return dmnTableIndex;
-  }
-
-  public SetRemovalTimeBatchConfiguration setDmnTableIndex(int dmnTableIndex) {
-    this.dmnTableIndex = dmnTableIndex;
-    return this;
-  }
-
-  public int getProcessIdIndex() {
-    return processIdIndex;
-  }
-
-  public SetRemovalTimeBatchConfiguration setProcessIdIndex(int processIdIndex) {
-    this.processIdIndex = processIdIndex;
-    return this;
-  }
 }

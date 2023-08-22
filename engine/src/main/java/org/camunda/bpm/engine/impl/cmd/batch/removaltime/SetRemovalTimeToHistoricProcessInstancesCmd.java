@@ -90,7 +90,7 @@ public class SetRemovalTimeToHistoricProcessInstancesCmd implements Command<Batc
         .setHierarchical(builder.isHierarchical())
         .setHasRemovalTime(hasRemovalTime())
         .setRemovalTime(builder.getRemovalTime())
-        .setSplitByHistoryTable(builder.isSplitByHistoryTable());
+        .setUseRowLimit(builder.isUseRowLimit());
   }
 
   protected boolean hasRemovalTime() {
@@ -105,6 +105,7 @@ public class SetRemovalTimeToHistoricProcessInstancesCmd implements Command<Batc
     propertyChanges.add(new PropertyChange("hierarchical", null, builder.isHierarchical()));
     propertyChanges.add(new PropertyChange("nrOfInstances", null, numInstances));
     propertyChanges.add(new PropertyChange("async", null, true));
+    propertyChanges.add(new PropertyChange("useRowLimit", null, builder.isUseRowLimit()));
 
     commandContext.getOperationLogManager()
       .logProcessInstanceOperation(UserOperationLogEntry.OPERATION_TYPE_SET_REMOVAL_TIME, propertyChanges);

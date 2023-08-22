@@ -39,7 +39,7 @@ public class SetRemovalTimeToHistoricProcessInstancesBuilderImpl implements SetR
   protected Date removalTime;
   protected Mode mode = null;
   protected boolean isHierarchical;
-  protected boolean isSplitByHistoryTable;
+  protected boolean useRowLimit;
 
   protected CommandExecutor commandExecutor;
 
@@ -91,8 +91,8 @@ public class SetRemovalTimeToHistoricProcessInstancesBuilderImpl implements SetR
   }
 
   @Override
-  public SetRemovalTimeToHistoricProcessInstancesBuilder splitByTable() {
-    isSplitByHistoryTable = true;
+  public SetRemovalTimeToHistoricProcessInstancesBuilder useRowLimit() {
+    useRowLimit = true;
     return this;
   }
 
@@ -128,7 +128,7 @@ public class SetRemovalTimeToHistoricProcessInstancesBuilderImpl implements SetR
     return isHierarchical;
   }
 
-  public boolean isSplitByHistoryTable() {
-    return isSplitByHistoryTable;
+  public boolean isUseRowLimit() {
+    return useRowLimit;
   }
 }

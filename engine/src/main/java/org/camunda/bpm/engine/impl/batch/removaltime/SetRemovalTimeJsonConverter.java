@@ -37,10 +37,7 @@ public class SetRemovalTimeJsonConverter
   protected static final String REMOVAL_TIME = "removalTime";
   protected static final String HAS_REMOVAL_TIME = "hasRemovalTime";
   protected static final String IS_HIERARCHICAL = "isHierarchical";
-  protected static final String IS_SPLIT_BY_TABLE = "isSplitByTable";
-  protected static final String PROCESS_TABLE_INDEX = "processTableIndex";
-  protected static final String DMN_TABLE_INDEX = "dmnTableIndex";
-  protected static final String PROCESS_ID_INDEX = "processIdIndex";
+  protected static final String USE_ROW_LIMIT = "useRowLimit";
 
   @Override
   public JsonObject writeConfiguration(SetRemovalTimeBatchConfiguration configuration) {
@@ -51,10 +48,7 @@ public class SetRemovalTimeJsonConverter
     JsonUtil.addDateField(json, REMOVAL_TIME, configuration.getRemovalTime());
     JsonUtil.addField(json, HAS_REMOVAL_TIME, configuration.hasRemovalTime());
     JsonUtil.addField(json, IS_HIERARCHICAL, configuration.isHierarchical());
-    JsonUtil.addField(json, IS_SPLIT_BY_TABLE, configuration.isSplitByHistoryTable());
-    JsonUtil.addField(json, PROCESS_TABLE_INDEX, configuration.getProcessTableIndex());
-    JsonUtil.addField(json, DMN_TABLE_INDEX, configuration.getDmnTableIndex());
-    JsonUtil.addField(json, PROCESS_ID_INDEX, configuration.getProcessIdIndex());
+    JsonUtil.addField(json, USE_ROW_LIMIT, configuration.isUseRowLimit());
 
     return json;
   }
@@ -74,20 +68,13 @@ public class SetRemovalTimeJsonConverter
 
     boolean isHierarchical = JsonUtil.getBoolean(jsonObject, IS_HIERARCHICAL);
 
-    boolean isSplitByTable = JsonUtil.getBoolean(jsonObject, IS_SPLIT_BY_TABLE);
-
-    int processTableIndex = JsonUtil.getInt(jsonObject, PROCESS_TABLE_INDEX);
-    int dmnTableIndex = JsonUtil.getInt(jsonObject, DMN_TABLE_INDEX);
-    int processIdIndex = JsonUtil.getInt(jsonObject, PROCESS_ID_INDEX);
+    boolean useRowLimit = JsonUtil.getBoolean(jsonObject, USE_ROW_LIMIT);
 
     return new SetRemovalTimeBatchConfiguration(instanceIds, mappings)
       .setRemovalTime(removalTime)
       .setHasRemovalTime(hasRemovalTime)
       .setHierarchical(isHierarchical)
-      .setSplitByHistoryTable(isSplitByTable)
-      .setProcessTableIndex(processTableIndex)
-      .setDmnTableIndex(dmnTableIndex)
-      .setProcessIdIndex(processIdIndex);
+      .setUseRowLimit(useRowLimit);
   }
 
 }

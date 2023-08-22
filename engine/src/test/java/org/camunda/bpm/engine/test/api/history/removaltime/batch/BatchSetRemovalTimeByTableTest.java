@@ -101,10 +101,13 @@ public class BatchSetRemovalTimeByTableTest {
   protected ExternalTaskService externalTaskService;
   protected AuthorizationService authorizationService;
   protected int defaultMaxUpdateRows;
+  protected int defaultInvocationsPerBatchJob;
 
   @Before
   public void assignServices() {
     defaultMaxUpdateRows = engineRule.getProcessEngineConfiguration().getHistoryCleanupBatchSize();
+    defaultInvocationsPerBatchJob = engineRule.getProcessEngineConfiguration().getInvocationsPerBatchJob();
+
     engineRule.getProcessEngineConfiguration().setHistoryCleanupBatchSize(1);
     runtimeService = engineRule.getRuntimeService();
     decisionService = engineRule.getDecisionService();
@@ -119,6 +122,7 @@ public class BatchSetRemovalTimeByTableTest {
   @After
   public void tearDown() {
     engineRule.getProcessEngineConfiguration().setHistoryCleanupBatchSize(defaultMaxUpdateRows);
+    engineRule.getProcessEngineConfiguration().setInvocationsPerBatchJob(defaultInvocationsPerBatchJob);
   }
 
   @Test
@@ -137,7 +141,7 @@ public class BatchSetRemovalTimeByTableTest {
     Batch batch = historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync();
     testRule.executeSeedJobs(batch, true);
     testRule.getExecutionJobs(batch).forEach(job -> managementService.executeJob(job.getId()));
@@ -146,6 +150,28 @@ public class BatchSetRemovalTimeByTableTest {
     assertThat(testRule.getExecutionJobs(batch)).isNotEmpty();
   }
 
+  @Test
+  public void shouldCreateOneRemovalTimeJobPerProcessInstance() {
+    // given
+    engineRule.getProcessEngineConfiguration().setInvocationsPerBatchJob(3);
+
+    TestProcessBuilder process = testRule.process().userTask().deploy();
+    process.start();
+    process.start();
+
+    HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery();
+
+    // when
+    Batch batch = historyService.setRemovalTimeToHistoricProcessInstances()
+        .absoluteRemovalTime(REMOVAL_TIME)
+        .byQuery(query)
+        .useRowLimit()
+        .executeAsync();
+    testRule.executeSeedJobs(batch, true);
+
+    // then
+    assertThat(testRule.getExecutionJobs(batch)).hasSize(2);
+  }
 
   @Test
   @Deployment(resources = {
@@ -173,7 +199,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -215,7 +241,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -260,7 +286,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -292,7 +318,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -314,7 +340,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -338,7 +364,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -365,7 +391,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -398,7 +424,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -442,7 +468,7 @@ public class BatchSetRemovalTimeByTableTest {
         historyService.setRemovalTimeToHistoricProcessInstances()
             .absoluteRemovalTime(REMOVAL_TIME)
             .byQuery(query)
-            .splitByTable()
+            .useRowLimit()
             .executeAsync()
     );
 
@@ -486,7 +512,7 @@ public class BatchSetRemovalTimeByTableTest {
         historyService.setRemovalTimeToHistoricProcessInstances()
             .absoluteRemovalTime(REMOVAL_TIME)
             .byQuery(query)
-            .splitByTable()
+            .useRowLimit()
             .executeAsync()
     );
 
@@ -514,7 +540,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -539,7 +565,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -566,7 +592,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -598,7 +624,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -627,7 +653,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -660,7 +686,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -696,7 +722,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -727,7 +753,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -763,7 +789,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -790,7 +816,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -822,7 +848,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -847,7 +873,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query.processInstanceId(instance1))
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -884,7 +910,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -913,7 +939,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -946,7 +972,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -974,7 +1000,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1009,7 +1035,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1041,7 +1067,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1077,7 +1103,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1117,7 +1143,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1159,7 +1185,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1200,7 +1226,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1241,7 +1267,7 @@ public class BatchSetRemovalTimeByTableTest {
       historyService.setRemovalTimeToHistoricProcessInstances()
         .absoluteRemovalTime(REMOVAL_TIME)
         .byQuery(query)
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1288,7 +1314,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1339,7 +1365,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1393,7 +1419,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1428,7 +1454,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1461,7 +1487,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1493,7 +1519,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1530,7 +1556,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1567,7 +1593,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1621,7 +1647,7 @@ public class BatchSetRemovalTimeByTableTest {
             .calculatedRemovalTime()
             .byQuery(query)
             .hierarchical()
-            .splitByTable()
+            .useRowLimit()
             .executeAsync()
     );
 
@@ -1676,7 +1702,7 @@ public class BatchSetRemovalTimeByTableTest {
             .calculatedRemovalTime()
             .byQuery(query)
             .hierarchical()
-            .splitByTable()
+            .useRowLimit()
             .executeAsync()
     );
 
@@ -1712,7 +1738,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1745,7 +1771,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1775,7 +1801,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1807,7 +1833,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1850,7 +1876,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1886,7 +1912,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1916,7 +1942,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1955,7 +1981,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -1987,7 +2013,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2023,7 +2049,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2054,7 +2080,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2092,7 +2118,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2127,7 +2153,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2166,7 +2192,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2209,7 +2235,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2254,7 +2280,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2304,7 +2330,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 
@@ -2354,7 +2380,7 @@ public class BatchSetRemovalTimeByTableTest {
         .calculatedRemovalTime()
         .byQuery(query)
         .hierarchical()
-        .splitByTable()
+        .useRowLimit()
         .executeAsync()
     );
 

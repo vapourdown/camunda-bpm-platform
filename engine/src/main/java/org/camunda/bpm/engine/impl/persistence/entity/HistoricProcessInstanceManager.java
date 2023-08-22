@@ -28,7 +28,6 @@ import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.impl.CleanableHistoricProcessInstanceReportImpl;
 import org.camunda.bpm.engine.impl.HistoricProcessInstanceQueryImpl;
 import org.camunda.bpm.engine.impl.Page;
-import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateContext;
 import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateResult;
 import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.db.DbEntity;
@@ -164,9 +163,9 @@ public class HistoricProcessInstanceManager extends AbstractHistoricManager {
   }
 
   public void addRemovalTimeToProcessInstancesByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
-    addRemovalTimeToProcessInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, new UpdateContext());
+    addRemovalTimeToProcessInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, null);
   }
-  public UpdateResult addRemovalTimeToProcessInstancesByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, UpdateContext updateContext) {
+  public UpdateResult addRemovalTimeToProcessInstancesByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
     CommandContext commandContext = getCommandContext();
 
     Map<Class<? extends DbEntity>, DbOperation> updateOperations = new HashMap<>();
@@ -223,12 +222,11 @@ public class HistoricProcessInstanceManager extends AbstractHistoricManager {
   }
 
   public void addRemovalTimeById(String processInstanceId, Date removalTime) {
-    addRemovalTimeById(processInstanceId, removalTime, new UpdateContext());
+    addRemovalTimeById(processInstanceId, removalTime, null);
   }
 
-  public UpdateResult addRemovalTimeById(String processInstanceId, Date removalTime, UpdateContext updateContext) {
+  public UpdateResult addRemovalTimeById(String processInstanceId, Date removalTime, Integer batchSize) {
     CommandContext commandContext = getCommandContext();
-    Integer batchSize = updateContext.getBatchSize();
 
     Map<Class<? extends DbEntity>, DbOperation> updateOperations = new HashMap<>();
 

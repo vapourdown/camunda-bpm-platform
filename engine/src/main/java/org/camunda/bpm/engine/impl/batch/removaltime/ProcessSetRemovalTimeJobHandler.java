@@ -26,17 +26,18 @@ import org.camunda.bpm.engine.batch.Batch;
 import org.camunda.bpm.engine.impl.batch.AbstractBatchJobHandler;
 import org.camunda.bpm.engine.impl.batch.BatchJobContext;
 import org.camunda.bpm.engine.impl.batch.RepeatableBatchJobDeclaration;
+import org.camunda.bpm.engine.impl.cfg.TransactionListener;
 import org.camunda.bpm.engine.impl.cfg.TransactionState;
 import org.camunda.bpm.engine.impl.db.DbEntity;
 import org.camunda.bpm.engine.impl.db.entitymanager.operation.DbOperation;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
+import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
 import org.camunda.bpm.engine.impl.jobexecutor.JobDeclaration;
 import org.camunda.bpm.engine.impl.jobexecutor.historycleanup.HistoryCleanupHelper;
 import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.HistoricProcessInstanceEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.JobEntity;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 
 /**
@@ -51,49 +52,34 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
                              ExecutionEntity execution,
                              CommandContext commandContext,
                              String tenantId) {
-    addRemovalTime(batchConfiguration, commandContext, HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext));
-  }
+    if (batchConfiguration.isUseRowLimit()) {
+      // only one instance allowed if enabled
+      String instanceId = batchConfiguration.getIds().get(0);
+      String currentJobId = commandContext.getCurrentJob().getId();
+      Integer batchSize = HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext);
+      CommandExecutor newCommandExecutor = commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew();
 
-  protected void addRemovalTime(SetRemovalTimeBatchConfiguration batchConfiguration,
-      CommandContext commandContext,
-      int batchSize) {
-    if (batchConfiguration.isSplitByHistoryTable()) {
-      int processIdIndex = batchConfiguration.getProcessIdIndex();
-      String instanceId = batchConfiguration.getIds().get(processIdIndex);
-      UpdateContext updateContext = new UpdateContext(true, batchSize);
-      UpdateResult updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, updateContext, commandContext);
-      if (updateResult == null) {
-        // instance not found or removal time exists already, next instance
-        if (processIdIndex < batchConfiguration.getIds().size() - 1) {
-          batchConfiguration.setProcessIdIndex(processIdIndex + 1);
-          addRemovalTime(batchConfiguration, commandContext, batchSize);
-        }
-      } else {
-        JobEntity currentJob = commandContext.getCurrentJob();
-        ProcessSetRemovalTimeResultHandler transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, batchConfiguration,
-            currentJob.getId(), commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew(), this);
-        commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, transactionResulthandler);
-      }
+      UpdateResult updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, batchSize, commandContext);
+
+      TransactionListener transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, batchConfiguration, currentJobId, newCommandExecutor, this);
+      commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, transactionResulthandler);
     } else {
-      batchConfiguration.getIds().forEach(id -> addRemovalTimeToInstance(id, batchConfiguration, new UpdateContext(), commandContext));
+      batchConfiguration.getIds().forEach(id -> addRemovalTimeToInstance(id, batchConfiguration, null, commandContext));
     }
   }
 
-  protected UpdateResult addRemovalTimeToInstance(String instanceId,
-      SetRemovalTimeBatchConfiguration batchConfiguration,
-      UpdateContext updateContext,
-      CommandContext commandContext) {
+  protected UpdateResult addRemovalTimeToInstance(String instanceId, SetRemovalTimeBatchConfiguration batchConfiguration, Integer batchSize, CommandContext commandContext) {
     HistoricProcessInstanceEntity instance = findProcessInstanceById(instanceId, commandContext);
     if (instance != null) {
       if (batchConfiguration.isHierarchical() && hasHierarchy(instance)) {
         String rootProcessInstanceId = instance.getRootProcessInstanceId();
         HistoricProcessInstanceEntity rootInstance = findProcessInstanceById(rootProcessInstanceId, commandContext);
         Date removalTime = getOrCalculateRemovalTime(batchConfiguration, rootInstance, commandContext);
-        return addRemovalTimeToHierarchy(rootProcessInstanceId, removalTime, updateContext, commandContext);
+        return addRemovalTimeToHierarchy(rootProcessInstanceId, removalTime, batchSize, commandContext);
       } else {
         Date removalTime = getOrCalculateRemovalTime(batchConfiguration, instance, commandContext);
         if (removalTime != instance.getRemovalTime()) {
-          return addRemovalTime(instanceId, removalTime, updateContext, commandContext);
+          return addRemovalTime(instanceId, removalTime, batchSize, commandContext);
         }
       }
     }
@@ -103,33 +89,30 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
   protected Date getOrCalculateRemovalTime(SetRemovalTimeBatchConfiguration batchConfiguration, HistoricProcessInstanceEntity instance, CommandContext commandContext) {
     if (batchConfiguration.hasRemovalTime()) {
       return batchConfiguration.getRemovalTime();
-
     } else if (hasBaseTime(instance, commandContext)) {
       return calculateRemovalTime(instance, commandContext);
-
     } else {
       return null;
-
     }
   }
 
-  protected UpdateResult addRemovalTimeToHierarchy(String rootProcessInstanceId, Date removalTime, UpdateContext updateContext, CommandContext commandContext) {
+  protected UpdateResult addRemovalTimeToHierarchy(String rootProcessInstanceId, Date removalTime, Integer batchSize, CommandContext commandContext) {
     UpdateResult updateResult = commandContext.getHistoricProcessInstanceManager()
-        .addRemovalTimeToProcessInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, updateContext);
+        .addRemovalTimeToProcessInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize);
     if (isDmnEnabled(commandContext)) {
       return commandContext.getHistoricDecisionInstanceManager()
-          .addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, updateContext)
+          .addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize)
           .addOperations(updateResult.getOperations());
     }
     return updateResult;
   }
 
-  protected UpdateResult addRemovalTime(String instanceId, Date removalTime, UpdateContext updateContext, CommandContext commandContext) {
+  protected UpdateResult addRemovalTime(String instanceId, Date removalTime, Integer batchSize, CommandContext commandContext) {
     UpdateResult updateResult = commandContext.getHistoricProcessInstanceManager()
-      .addRemovalTimeById(instanceId, removalTime, updateContext);
+      .addRemovalTimeById(instanceId, removalTime, batchSize);
     if (isDmnEnabled(commandContext)) {
       return commandContext.getHistoricDecisionInstanceManager()
-        .addRemovalTimeToDecisionsByProcessInstanceId(instanceId, removalTime, updateContext)
+        .addRemovalTimeToDecisionsByProcessInstanceId(instanceId, removalTime, batchSize)
         .addOperations(updateResult.getOperations());
     }
     return updateResult;
@@ -199,7 +182,7 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
       .setRemovalTime(configuration.getRemovalTime())
       .setHasRemovalTime(configuration.hasRemovalTime())
       .setHierarchical(configuration.isHierarchical())
-      .setSplitByHistoryTable(configuration.isSplitByHistoryTable());
+      .setUseRowLimit(configuration.isUseRowLimit());
   }
 
   @Override
@@ -208,32 +191,16 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
   }
 
   @Override
-  public String getType() {
-    return Batch.TYPE_PROCESS_SET_REMOVAL_TIME;
+  public int calculateInvocationsPerBatchJob(String batchType, SetRemovalTimeBatchConfiguration configuration) {
+    if (configuration.isUseRowLimit()) {
+      return 1;
+    }
+    return super.calculateInvocationsPerBatchJob(batchType, configuration);
   }
 
-  public static class UpdateContext {
-    protected boolean splitByTable;
-    protected int batchSize;
-
-    public UpdateContext() {}
-    public UpdateContext(boolean splitByTable, int batchSize) {
-      this.splitByTable = splitByTable;
-      this.batchSize = batchSize;
-    }
-
-    public boolean isSplitByTable() {
-      return splitByTable;
-    }
-    public void setSplitByTable(boolean splitByTable) {
-      this.splitByTable = splitByTable;
-    }
-    public Integer getBatchSize() {
-      return isSplitByTable() ? batchSize : null;
-    }
-    public void setBatchSize(int batchSize) {
-      this.batchSize = batchSize;
-    }
+  @Override
+  public String getType() {
+    return Batch.TYPE_PROCESS_SET_REMOVAL_TIME;
   }
 
   public static class UpdateResult {
