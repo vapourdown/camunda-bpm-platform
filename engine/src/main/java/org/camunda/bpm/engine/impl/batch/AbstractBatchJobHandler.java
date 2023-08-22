@@ -115,8 +115,6 @@ public abstract class AbstractBatchJobHandler<T extends BatchConfiguration> impl
     }
 
     executeHandler(batchConfiguration, execution, commandContext, tenantId);
-
-    commandContext.getByteArrayManager().delete(byteArray);
   }
 
   protected abstract void executeHandler(final T configuration,

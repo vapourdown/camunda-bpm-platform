@@ -16,30 +16,23 @@
  */
 package org.camunda.bpm.engine.impl.batch.removaltime;
 
-import org.camunda.bpm.engine.impl.batch.BatchJobContext;
 import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateResult;
 import org.camunda.bpm.engine.impl.cfg.TransactionListener;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
-import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayManager;
 import org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 
 public class ProcessSetRemovalTimeResultHandler implements TransactionListener {
 
   protected UpdateResult updateResult;
-  protected SetRemovalTimeBatchConfiguration batchConfiguration;
   protected String jobId;
   protected CommandExecutor commandExecutor;
-  protected ProcessSetRemovalTimeJobHandler jobHandler;
 
-  public ProcessSetRemovalTimeResultHandler(UpdateResult updateResult, SetRemovalTimeBatchConfiguration batchConfiguration, String jobId, CommandExecutor commandExecutor, ProcessSetRemovalTimeJobHandler jobHandler) {
+  public ProcessSetRemovalTimeResultHandler(UpdateResult updateResult, String jobId, CommandExecutor commandExecutor) {
     this.updateResult = updateResult;
-    this.batchConfiguration = batchConfiguration;
     this.jobId = jobId;
     this.commandExecutor = commandExecutor;
-    this.jobHandler = jobHandler;
   }
 
   @Override
@@ -47,9 +40,6 @@ public class ProcessSetRemovalTimeResultHandler implements TransactionListener {
     commandExecutor.execute(context -> {
         EverLivingJobEntity job = (EverLivingJobEntity) context.getJobManager().findJobById(jobId);
         if (!updateResult.isInstanceCompleted(context)) {
-          // save configuration as byte array entity, deleted after each job execution
-          ByteArrayEntity newConfiguration = saveConfiguration(context.getByteArrayManager(), batchConfiguration);
-          ProcessSetRemovalTimeJobHandler.JOB_DECLARATION.reconfigure(new BatchJobContext(null, newConfiguration), job);
           context.getJobManager().reschedule(job, ClockUtil.getCurrentTime());
         } else {
           job.delete(true);
@@ -58,10 +48,4 @@ public class ProcessSetRemovalTimeResultHandler implements TransactionListener {
     });
   }
 
-  protected ByteArrayEntity saveConfiguration(ByteArrayManager byteArrayManager, SetRemovalTimeBatchConfiguration jobConfiguration) {
-    ByteArrayEntity configurationEntity = new ByteArrayEntity();
-    configurationEntity.setBytes(jobHandler.writeConfiguration(jobConfiguration));
-    byteArrayManager.insert(configurationEntity);
-    return configurationEntity;
-  }
 }

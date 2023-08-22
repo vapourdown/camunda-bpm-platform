@@ -58,10 +58,8 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
       String currentJobId = commandContext.getCurrentJob().getId();
       Integer batchSize = HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext);
       CommandExecutor newCommandExecutor = commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew();
-
       UpdateResult updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, batchSize, commandContext);
-
-      TransactionListener transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, batchConfiguration, currentJobId, newCommandExecutor, this);
+      TransactionListener transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, currentJobId, newCommandExecutor);
       commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, transactionResulthandler);
     } else {
       batchConfiguration.getIds().forEach(id -> addRemovalTimeToInstance(id, batchConfiguration, null, commandContext));

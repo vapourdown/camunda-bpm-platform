@@ -77,7 +77,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 @RequiredHistoryLevel(HISTORY_FULL)
-public class BatchSetRemovalTimeByTableTest {
+public class BatchSetRemovalTimeRowLimitTest {
 
   protected ProcessEngineRule engineRule = new ProvidedProcessEngineRule();
   protected ProcessEngineTestRule engineTestRule = new ProcessEngineTestRule(engineRule);
