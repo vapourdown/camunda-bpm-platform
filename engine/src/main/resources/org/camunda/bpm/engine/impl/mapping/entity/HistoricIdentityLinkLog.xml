@@ -72,6 +72,21 @@
       </if>
   </update>
 
+  <update id="updateIdentityLinkLogByRootProcessInstanceId_postgres"
+          parameterType="java.util.Map">
+      update ${prefix}ACT_HI_IDENTITYLINK set
+      REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_IDENTITYLINK
+      </if>
+
+      where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
+      </if>
+  </update>
+
   <update id="updateIdentityLinkLogByRootProcessInstanceId_mssql"
           parameterType="java.util.Map">
       update
@@ -90,18 +105,17 @@
 
   <update id="updateIdentityLinkLogByRootProcessInstanceId_mysql"
           parameterType="java.util.Map">
-      update
-      <if test="maxResults != null">
-        ${limitBeforeWithoutOffset}
-      </if>
-      ${prefix}ACT_HI_IDENTITYLINK set
+      update ${prefix}ACT_HI_IDENTITYLINK set
       REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP},
       TIMESTAMP_ = TIMESTAMP_
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_IDENTITYLINK
+      </if>
 
       where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
-        ${limitAfterWithoutOffset}
+        ${limitAfterInUpdate}
       </if>
   </update>
 
@@ -121,6 +135,24 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateIdentityLinkLogByProcessInstanceId_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_HI_IDENTITYLINK
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_IDENTITYLINK
+      </if>
+      where TASK_ID_ IN (
+        SELECT ID_
+        FROM ${prefix}ACT_HI_TASKINST
+        WHERE PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 
@@ -146,21 +178,20 @@
 
   <update id="updateIdentityLinkLogByProcessInstanceId_mysql"
           parameterType="java.util.Map">
-    update
-    <if test="maxResults != null">
-      ${limitBeforeWithoutOffset}
-    </if>
-    ${prefix}ACT_HI_IDENTITYLINK
+    update ${prefix}ACT_HI_IDENTITYLINK
       set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP},
           TIMESTAMP_ = TIMESTAMP_
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_IDENTITYLINK
+      </if>
       where TASK_ID_ IN (
         SELECT ID_
         FROM ${prefix}ACT_HI_TASKINST
         WHERE PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
       )
       <if test="maxResults != null">
-      and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
-      ${limitAfterWithoutOffset}
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
   

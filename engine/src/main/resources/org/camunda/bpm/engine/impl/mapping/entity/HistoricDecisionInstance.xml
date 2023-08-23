@@ -99,6 +99,21 @@
       </if>
   </update>
 
+  <update id="updateHistoricDecisionInstancesByRootProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+      update ${prefix}ACT_HI_DECINST set
+      REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_DECINST
+      </if>
+
+      where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
+      </if>
+  </update>
+
   <update id="updateHistoricDecisionInstancesByRootProcessInstanceId_mssql"
           parameterType="java.util.Map">
     update
@@ -127,6 +142,20 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateHistoricDecisionInstancesByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_HI_DECINST
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_DECINST
+      </if>
+      where PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 

@@ -515,6 +515,21 @@
       </if>
   </update>
 
+  <update id="updateByteArraysByRootProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+      update ${prefix}ACT_GE_BYTEARRAY set
+      REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_GE_BYTEARRAY
+      </if>
+
+      where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
+      </if>
+  </update>
+
   <update id="updateByteArraysByRootProcessInstanceId_mssql"
           parameterType="java.util.Map">
     update
@@ -548,6 +563,25 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateVariableByteArraysByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_GE_BYTEARRAY
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_GE_BYTEARRAY
+      </if>
+      where ID_ IN (
+        <!-- variables -->
+        SELECT BYTEARRAY_ID_
+        FROM ${prefix}ACT_HI_VARINST
+        WHERE PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 
@@ -591,6 +625,27 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateDecisionInputsByteArraysByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_GE_BYTEARRAY
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_GE_BYTEARRAY
+      </if>
+      where ID_ IN (
+        <!-- decision inputs -->
+        SELECT BYTEARRAY_ID_
+        FROM ${prefix}ACT_HI_DEC_IN I
+        INNER JOIN ${prefix}ACT_HI_DECINST D
+        ON I.DEC_INST_ID_ = D.ID_
+        WHERE D.PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 
@@ -639,6 +694,27 @@
       </if>
   </update>
 
+  <update id="updateDecisionOutputsByteArraysByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_GE_BYTEARRAY
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_GE_BYTEARRAY
+      </if>
+      where ID_ IN (
+        <!-- decision outputs -->
+        SELECT BYTEARRAY_ID_
+        FROM ${prefix}ACT_HI_DEC_OUT O
+        INNER JOIN ${prefix}ACT_HI_DECINST D
+        ON O.DEC_INST_ID_ = D.ID_
+        WHERE D.PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
+      </if>
+  </update>
+
   <update id="updateDecisionOutputsByteArraysByProcessInstanceId_mssql"
           parameterType="java.util.Map">
     update
@@ -679,6 +755,25 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateJobLogByteArraysByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_GE_BYTEARRAY
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_GE_BYTEARRAY
+      </if>
+      where ID_ IN (
+        <!-- job log -->
+        SELECT JOB_EXCEPTION_STACK_ID_
+        FROM ${prefix}ACT_HI_JOB_LOG
+        WHERE PROCESS_INSTANCE_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 
@@ -723,6 +818,25 @@
       </if>
   </update>
 
+  <update id="updateExternalTaskLogByteArraysByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_GE_BYTEARRAY
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_GE_BYTEARRAY
+      </if>
+      where ID_ IN (
+        <!-- external task log -->
+        SELECT ERROR_DETAILS_ID_
+        FROM ${prefix}ACT_HI_EXT_TASK_LOG
+        WHERE PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
+      </if>
+  </update>
+
   <update id="updateExternalTaskLogByteArraysByProcessInstanceId_mssql"
           parameterType="java.util.Map">
     update
@@ -763,6 +877,27 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateAttachmentByteArraysByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_GE_BYTEARRAY
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_GE_BYTEARRAY
+      </if>
+      where ID_ IN (
+        <!-- attachment -->
+        SELECT CONTENT_ID_
+        FROM ${prefix}ACT_HI_ATTACHMENT A
+        LEFT JOIN ${prefix}ACT_HI_TASKINST T ON A.TASK_ID_ = T.ID_
+        WHERE A.PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+          OR T.PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 

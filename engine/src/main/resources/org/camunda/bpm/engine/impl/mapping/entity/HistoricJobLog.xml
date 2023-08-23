@@ -95,6 +95,21 @@
       </if>
   </update>
 
+  <update id="updateJobLogByRootProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+      update ${prefix}ACT_HI_JOB_LOG set
+      REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_JOB_LOG
+      </if>
+
+      where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
+      </if>
+  </update>
+
   <update id="updateJobLogByRootProcessInstanceId_mssql"
           parameterType="java.util.Map">
       update
@@ -123,6 +138,20 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateJobLogByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_HI_JOB_LOG
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_JOB_LOG
+      </if>
+      where PROCESS_INSTANCE_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 

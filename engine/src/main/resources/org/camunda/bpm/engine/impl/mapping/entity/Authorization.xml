@@ -82,6 +82,21 @@
     </if>
   </update>
 
+  <update id="updateAuthorizationsByRootProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_RU_AUTHORIZATION set
+    REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+    <if test="maxResults != null">
+      ${limitBeforeInUpdate} ${prefix}ACT_RU_AUTHORIZATION
+    </if>
+
+    where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+    <if test="maxResults != null">
+      and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+      ${limitAfterInUpdate}
+    </if>
+  </update>
+
   <update id="updateAuthorizationsByRootProcessInstanceId_mssql"
           parameterType="java.util.Map">
     update
@@ -119,6 +134,29 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateAuthorizationsByProcessInstanceId_mysql_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_RU_AUTHORIZATION set
+    REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+    <if test="maxResults != null">
+      ${limitBeforeInUpdate} ${prefix}ACT_RU_AUTHORIZATION
+    </if>
+
+    where
+      <!-- task instances -->
+      (RESOURCE_ID_ IN (
+        SELECT ID_
+        FROM ${prefix}ACT_HI_TASKINST
+        WHERE PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      )
+      <!-- process instances -->
+      or RESOURCE_ID_ = #{processInstanceId, jdbcType=VARCHAR})
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 

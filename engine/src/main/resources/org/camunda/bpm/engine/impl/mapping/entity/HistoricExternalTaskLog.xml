@@ -85,6 +85,21 @@
       </if>
   </update>
 
+  <update id="updateExternalTaskLogByRootProcessInstanceId_postgres"
+          parameterType="java.util.Map">
+      update ${prefix}ACT_HI_EXT_TASK_LOG set
+      REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_EXT_TASK_LOG
+      </if>
+
+      where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
+      </if>
+  </update>
+
   <update id="updateExternalTaskLogByRootProcessInstanceId_mssql"
           parameterType="java.util.Map">
       update
@@ -103,18 +118,17 @@
 
   <update id="updateExternalTaskLogByRootProcessInstanceId_mysql"
           parameterType="java.util.Map">
-      update
-      <if test="maxResults != null">
-        ${limitBeforeWithoutOffset}
-      </if>
-      ${prefix}ACT_HI_EXT_TASK_LOG set
+      update ${prefix}ACT_HI_EXT_TASK_LOG set
       REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP},
       TIMESTAMP_ = TIMESTAMP_
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_EXT_TASK_LOG
+      </if>
 
       where ROOT_PROC_INST_ID_ = #{rootProcessInstanceId, jdbcType=VARCHAR}
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
-        ${limitAfterWithoutOffset}
+        ${limitAfterInUpdate}
       </if>
   </update>
 
@@ -130,6 +144,20 @@
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
         ${limitAfterWithoutOffset}
+      </if>
+  </update>
+
+  <update id="updateExternalTaskLogByProcessInstanceId_postgres"
+          parameterType="java.util.Map">
+    update ${prefix}ACT_HI_EXT_TASK_LOG
+      set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP}
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_EXT_TASK_LOG
+      </if>
+      where PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
+      <if test="maxResults != null">
+        and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
+        ${limitAfterInUpdate}
       </if>
   </update>
 
@@ -151,17 +179,16 @@
 
   <update id="updateExternalTaskLogByProcessInstanceId_mysql"
           parameterType="java.util.Map">
-    update
-    <if test="maxResults != null">
-      ${limitBeforeWithoutOffset}
-    </if>
-    ${prefix}ACT_HI_EXT_TASK_LOG
+    update ${prefix}ACT_HI_EXT_TASK_LOG
       set REMOVAL_TIME_ = #{removalTime, jdbcType=TIMESTAMP},
           TIMESTAMP_ = TIMESTAMP_
+      <if test="maxResults != null">
+        ${limitBeforeInUpdate} ${prefix}ACT_HI_EXT_TASK_LOG
+      </if>
       where PROC_INST_ID_ = #{processInstanceId, jdbcType=VARCHAR}
       <if test="maxResults != null">
         and (REMOVAL_TIME_ is null or REMOVAL_TIME_ != #{removalTime, jdbcType=TIMESTAMP})
-        ${limitAfterWithoutOffset}
+        ${limitAfterInUpdate}
       </if>
   </update>
 

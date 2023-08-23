@@ -1887,6 +1887,9 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
       properties.put("distinct", DbSqlSessionFactory.databaseSpecificDistinct.get(databaseType));
       properties.put("numericCast", DbSqlSessionFactory.databaseSpecificNumericCast.get(databaseType));
 
+      properties.put("limitBeforeInUpdate", DbSqlSessionFactory.databaseSpecificLimitBeforeInUpdate.get(databaseType));
+      properties.put("limitAfterInUpdate", DbSqlSessionFactory.databaseSpecificLimitAfterInUpdate.get(databaseType));
+
       properties.put("countDistinctBeforeStart", DbSqlSessionFactory.databaseSpecificCountDistinctBeforeStart.get(databaseType));
       properties.put("countDistinctBeforeEnd", DbSqlSessionFactory.databaseSpecificCountDistinctBeforeEnd.get(databaseType));
       properties.put("countDistinctAfterEnd", DbSqlSessionFactory.databaseSpecificCountDistinctAfterEnd.get(databaseType));
