@@ -16,10 +16,14 @@
  */
 package org.camunda.bpm.engine.impl.batch.removaltime;
 
+import java.util.Set;
+import org.camunda.bpm.engine.impl.batch.BatchJobContext;
 import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateResult;
 import org.camunda.bpm.engine.impl.cfg.TransactionListener;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
+import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayEntity;
+import org.camunda.bpm.engine.impl.persistence.entity.ByteArrayManager;
 import org.camunda.bpm.engine.impl.persistence.entity.EverLivingJobEntity;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 
@@ -27,25 +31,41 @@ public class ProcessSetRemovalTimeResultHandler implements TransactionListener {
 
   protected UpdateResult updateResult;
   protected String jobId;
+  protected SetRemovalTimeBatchConfiguration batchJobConfiguration;
   protected CommandExecutor commandExecutor;
+  protected ProcessSetRemovalTimeJobHandler jobHandler;
 
-  public ProcessSetRemovalTimeResultHandler(UpdateResult updateResult, String jobId, CommandExecutor commandExecutor) {
+  public ProcessSetRemovalTimeResultHandler(UpdateResult updateResult, String jobId, SetRemovalTimeBatchConfiguration batchJobConfiguration, CommandExecutor commandExecutor, ProcessSetRemovalTimeJobHandler jobHandler) {
     this.updateResult = updateResult;
     this.jobId = jobId;
+    this.batchJobConfiguration = batchJobConfiguration;
     this.commandExecutor = commandExecutor;
+    this.jobHandler = jobHandler;
   }
 
   @Override
   public void execute(CommandContext commandContext) {
+    // use the new command executor since the command context might already have been closed/finished
     commandExecutor.execute(context -> {
         EverLivingJobEntity job = (EverLivingJobEntity) context.getJobManager().findJobById(jobId);
-        if (updateResult.isInstanceCompleted(context)) {
+        Set<String> entitiesToUpdate = updateResult.getEntitiesToUpdate(context);
+        if (entitiesToUpdate.isEmpty()) {
           job.delete(true);
         } else {
+          batchJobConfiguration.setEntities(entitiesToUpdate);
+          // save batch job configuration as byte array entity since it's deleted after each job execution
+          ByteArrayEntity newConfiguration = saveConfiguration(context.getByteArrayManager(), batchJobConfiguration);
+          ProcessSetRemovalTimeJobHandler.JOB_DECLARATION.reconfigure(new BatchJobContext(null, newConfiguration), job);
           context.getJobManager().reschedule(job, ClockUtil.getCurrentTime());
         }
         return null;
     });
   }
 
+  protected ByteArrayEntity saveConfiguration(ByteArrayManager byteArrayManager, SetRemovalTimeBatchConfiguration jobConfiguration) {
+    ByteArrayEntity configurationEntity = new ByteArrayEntity();
+    configurationEntity.setBytes(jobHandler.writeConfiguration(jobConfiguration));
+    byteArrayManager.insert(configurationEntity);
+    return configurationEntity;
+  }
 }

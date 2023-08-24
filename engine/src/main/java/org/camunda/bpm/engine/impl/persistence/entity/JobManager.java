@@ -115,7 +115,7 @@ public class JobManager extends AbstractManager {
   }
 
   public void reschedule(JobEntity jobEntity, Date newDuedate) {
-    ((EverLivingJobEntity)jobEntity).init(Context.getCommandContext(), true);
+    ((EverLivingJobEntity)jobEntity).init(Context.getCommandContext(), true, false);
     jobEntity.setSuspensionState(SuspensionState.ACTIVE.getStateCode());
     jobEntity.setDuedate(newDuedate);
     hintJobExecutorIfNeeded(jobEntity, newDuedate);

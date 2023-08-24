@@ -19,6 +19,7 @@ package org.camunda.bpm.engine.impl.persistence.entity;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
 import org.camunda.bpm.engine.impl.db.EnginePersistenceLogger;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
+import org.camunda.bpm.engine.impl.jobexecutor.JobHandler;
 import org.camunda.bpm.engine.impl.jobexecutor.historycleanup.HistoryCleanupHelper;
 
 /**
@@ -42,16 +43,24 @@ public class EverLivingJobEntity extends JobEntity {
   @Override
   protected void postExecute(CommandContext commandContext) {
     LOG.debugJobExecuted(this);
-    init(commandContext);
+    init(commandContext, false, true);
     commandContext.getHistoricJobLogManager().fireJobSuccessfulEvent(this);
   }
 
   @Override
   public void init(CommandContext commandContext) {
-    init(commandContext, false);
+    init(commandContext, false, false);
   }
 
-  public void init(CommandContext commandContext, boolean shouldResetLock) {
+  public void init(CommandContext commandContext, boolean shouldResetLock, boolean shouldCallDeleteHandler) {
+    if (shouldCallDeleteHandler) {
+      // clean additional data related to this job
+      JobHandler jobHandler = getJobHandler();
+      if (jobHandler != null) {
+        jobHandler.onDelete(getJobHandlerConfiguration(), this);
+      }
+    }
+
     //cancel the retries -> will resolve job incident if present
     int retries = HistoryCleanupHelper.getMaxRetries();
     setRetries(retries);

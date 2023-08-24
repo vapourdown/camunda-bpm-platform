@@ -33,6 +33,7 @@ import org.camunda.bpm.engine.impl.CleanableHistoricDecisionInstanceReportImpl;
 import org.camunda.bpm.engine.impl.HistoricDecisionInstanceQueryImpl;
 import org.camunda.bpm.engine.impl.Page;
 import org.camunda.bpm.engine.impl.batch.removaltime.ProcessSetRemovalTimeJobHandler.UpdateResult;
+import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.db.DbEntity;
 import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
 import org.camunda.bpm.engine.impl.db.entitymanager.operation.DbOperation;
@@ -304,49 +305,61 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
   }
 
   public void addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime) {
-    addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, null);
+    addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, null, Collections.emptySet());
   }
 
-  public UpdateResult addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize) {
+  public UpdateResult addRemovalTimeToDecisionsByRootProcessInstanceId(String rootProcessInstanceId, Date removalTime, Integer batchSize, Set<String> entities) {
     Map<Class<? extends DbEntity>, DbOperation> updateOperations = new HashMap<>();
 
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put("rootProcessInstanceId", rootProcessInstanceId);
-    parameters.put("removalTime", removalTime);
-    parameters.put("maxResults", batchSize);
+    if (entities == null || entities.isEmpty()
+        || entities.contains(HistoricDecisionInstanceEntity.class.getName())
+        || entities.contains(HistoricDecisionInputInstanceEntity.class.getName())
+        || entities.contains(HistoricDecisionOutputInstanceEntity.class.getName())) {
 
-    addOperation(getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByRootProcessInstanceId", parameters), updateOperations);
+      Map<String, Object> parameters = new HashMap<>();
+      parameters.put("rootProcessInstanceId", rootProcessInstanceId);
+      parameters.put("removalTime", removalTime);
+      parameters.put("maxResults", batchSize);
 
-    addOperation(getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionInputInstanceEntity.class, "updateHistoricDecisionInputInstancesByRootProcessInstanceId", parameters), updateOperations);
+      addOperation(getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByRootProcessInstanceId", parameters), updateOperations);
 
-    addOperation(getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionOutputInstanceEntity.class, "updateHistoricDecisionOutputInstancesByRootProcessInstanceId", parameters), updateOperations);
+      addOperation(getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionInputInstanceEntity.class, "updateHistoricDecisionInputInstancesByRootProcessInstanceId", parameters), updateOperations);
+
+      addOperation(getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionOutputInstanceEntity.class, "updateHistoricDecisionOutputInstancesByRootProcessInstanceId", parameters), updateOperations);
+    }
 
     return new UpdateResult(updateOperations);
   }
 
   public void addRemovalTimeToDecisionsByProcessInstanceId(String processInstanceId, Date removalTime) {
-    addRemovalTimeToDecisionsByProcessInstanceId(processInstanceId, removalTime, null);
+    addRemovalTimeToDecisionsByProcessInstanceId(processInstanceId, removalTime, null, Collections.emptySet());
   }
 
-  public UpdateResult addRemovalTimeToDecisionsByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize) {
+  public UpdateResult addRemovalTimeToDecisionsByProcessInstanceId(String processInstanceId, Date removalTime, Integer batchSize, Set<String> entities) {
     Map<Class<? extends DbEntity>, DbOperation> updateOperations = new HashMap<>();
 
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put("processInstanceId", processInstanceId);
-    parameters.put("removalTime", removalTime);
-    parameters.put("maxResults", batchSize);
+    if (entities == null || entities.isEmpty()
+        || entities.contains(HistoricDecisionInstanceEntity.class.getName())
+        || entities.contains(HistoricDecisionInputInstanceEntity.class.getName())
+        || entities.contains(HistoricDecisionOutputInstanceEntity.class.getName())) {
 
-    addOperation(getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByProcessInstanceId", parameters), updateOperations);
+      Map<String, Object> parameters = new HashMap<>();
+      parameters.put("processInstanceId", processInstanceId);
+      parameters.put("removalTime", removalTime);
+      parameters.put("maxResults", batchSize);
 
-    addOperation(getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionInputInstanceEntity.class, "updateHistoricDecisionInputInstancesByProcessInstanceId", parameters), updateOperations);
+      addOperation(getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionInstanceEntity.class, "updateHistoricDecisionInstancesByProcessInstanceId", parameters), updateOperations);
 
-    addOperation(getDbEntityManager()
-      .updatePreserveOrder(HistoricDecisionOutputInstanceEntity.class, "updateHistoricDecisionOutputInstancesByProcessInstanceId", parameters), updateOperations);
+      addOperation(getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionInputInstanceEntity.class, "updateHistoricDecisionInputInstancesByProcessInstanceId", parameters), updateOperations);
+
+      addOperation(getDbEntityManager()
+        .updatePreserveOrder(HistoricDecisionOutputInstanceEntity.class, "updateHistoricDecisionOutputInstancesByProcessInstanceId", parameters), updateOperations);
+    }
 
     return new UpdateResult(updateOperations);
   }
@@ -428,8 +441,13 @@ public class HistoricDecisionInstanceManager extends AbstractHistoricManager {
     return deleteOperations;
   }
 
-  protected void addOperation(DbOperation operation, Map<Class<? extends DbEntity>, DbOperation> operations) {
+  protected static void addOperation(DbOperation operation, Map<Class<? extends DbEntity>, DbOperation> operations) {
     operations.put(operation.getEntityType(), operation);
+  }
+
+  protected static boolean isEnableHistoricInstancePermissions() {
+    return Context.getProcessEngineConfiguration()
+        .isEnableHistoricInstancePermissions();
   }
 
 }

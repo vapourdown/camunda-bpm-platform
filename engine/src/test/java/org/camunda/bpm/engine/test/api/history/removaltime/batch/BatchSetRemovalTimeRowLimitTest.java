@@ -353,6 +353,30 @@ public class BatchSetRemovalTimeRowLimitTest {
   }
 
   @Test
+  public void shouldSetRemovalTime_ManyActivityInstances() {
+    // given
+    testRule.process().userTaskMI(1000).deploy().start();
+
+    HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery();
+
+    // when
+    testRule.syncExec(
+      historyService.setRemovalTimeToHistoricProcessInstances()
+        .absoluteRemovalTime(REMOVAL_TIME)
+        .byQuery(query)
+        .useRowLimit()
+        .executeAsync()
+    );
+
+    List<HistoricActivityInstance> historicActivityInstances = historyService.createHistoricActivityInstanceQuery()
+      .activityName("userTask")
+      .list();
+
+    // then
+    assertThat(historicActivityInstances).extracting("removalTime", Date.class).containsOnly(REMOVAL_TIME);
+  }
+
+  @Test
   public void shouldSetRemovalTime_TaskInstance() {
     // given
     testRule.process().userTask().deploy().start();

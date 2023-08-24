@@ -18,6 +18,7 @@ package org.camunda.bpm.engine.impl.batch.removaltime;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import org.camunda.bpm.engine.impl.batch.BatchConfiguration;
 import org.camunda.bpm.engine.impl.batch.DeploymentMappings;
 
@@ -30,6 +31,7 @@ public class SetRemovalTimeBatchConfiguration extends BatchConfiguration {
   protected boolean hasRemovalTime;
   protected boolean isHierarchical;
   protected boolean useRowLimit;
+  protected Set<String> entities;
 
   public SetRemovalTimeBatchConfiguration(List<String> ids) {
     this(ids, null);
@@ -72,6 +74,15 @@ public class SetRemovalTimeBatchConfiguration extends BatchConfiguration {
 
   public SetRemovalTimeBatchConfiguration setUseRowLimit(boolean useRowLimit) {
     this.useRowLimit = useRowLimit;
+    return this;
+  }
+
+  public Set<String> getEntities() {
+    return entities;
+  }
+
+  public SetRemovalTimeBatchConfiguration setEntities(Set<String> entities) {
+    this.entities = entities;
     return this;
   }
 

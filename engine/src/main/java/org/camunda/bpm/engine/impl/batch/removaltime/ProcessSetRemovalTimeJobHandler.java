@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.camunda.bpm.engine.batch.Batch;
 import org.camunda.bpm.engine.impl.batch.AbstractBatchJobHandler;
 import org.camunda.bpm.engine.impl.batch.BatchJobContext;
@@ -57,30 +59,31 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
     if (batchConfiguration.isUseRowLimit()) {
       // only one instance allowed if enabled
       String instanceId = batchConfiguration.getIds().get(0);
+      Set<String> entities = batchConfiguration.getEntities();
       Integer batchSize = HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext);
-      updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, batchSize, commandContext);
+      updateResult = addRemovalTimeToInstance(instanceId, batchConfiguration, batchSize, entities, commandContext);
     } else {
-      batchConfiguration.getIds().forEach(id -> addRemovalTimeToInstance(id, batchConfiguration, null, commandContext));
+      batchConfiguration.getIds().forEach(id -> addRemovalTimeToInstance(id, batchConfiguration, null, Collections.emptySet(), commandContext));
     }
     // handle ever living job entity in transaction handler
     String currentJobId = commandContext.getCurrentJob().getId();
     CommandExecutor newCommandExecutor = commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew();
-    TransactionListener transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, currentJobId, newCommandExecutor);
+    TransactionListener transactionResulthandler = new ProcessSetRemovalTimeResultHandler(updateResult, currentJobId, batchConfiguration, newCommandExecutor, this);
     commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, transactionResulthandler);
   }
 
-  protected UpdateResult addRemovalTimeToInstance(String instanceId, SetRemovalTimeBatchConfiguration batchConfiguration, Integer batchSize, CommandContext commandContext) {
+  protected UpdateResult addRemovalTimeToInstance(String instanceId, SetRemovalTimeBatchConfiguration batchConfiguration, Integer batchSize, Set<String> entities, CommandContext commandContext) {
     HistoricProcessInstanceEntity instance = findProcessInstanceById(instanceId, commandContext);
     if (instance != null) {
       if (batchConfiguration.isHierarchical() && hasHierarchy(instance)) {
         String rootProcessInstanceId = instance.getRootProcessInstanceId();
         HistoricProcessInstanceEntity rootInstance = findProcessInstanceById(rootProcessInstanceId, commandContext);
         Date removalTime = getOrCalculateRemovalTime(batchConfiguration, rootInstance, commandContext);
-        return addRemovalTimeToHierarchy(rootProcessInstanceId, removalTime, batchSize, commandContext);
+        return addRemovalTimeToHierarchy(rootProcessInstanceId, removalTime, batchSize, entities, commandContext);
       } else {
         Date removalTime = getOrCalculateRemovalTime(batchConfiguration, instance, commandContext);
         if (removalTime != instance.getRemovalTime()) {
-          return addRemovalTime(instanceId, removalTime, batchSize, commandContext);
+          return addRemovalTime(instanceId, removalTime, batchSize, entities, commandContext);
         }
       }
     }
@@ -97,23 +100,23 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
     }
   }
 
-  protected UpdateResult addRemovalTimeToHierarchy(String rootProcessInstanceId, Date removalTime, Integer batchSize, CommandContext commandContext) {
+  protected UpdateResult addRemovalTimeToHierarchy(String rootProcessInstanceId, Date removalTime, Integer batchSize, Set<String> entities, CommandContext commandContext) {
     UpdateResult updateResult = commandContext.getHistoricProcessInstanceManager()
-        .addRemovalTimeToProcessInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize);
+        .addRemovalTimeToProcessInstancesByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize, entities);
     if (isDmnEnabled(commandContext)) {
       return commandContext.getHistoricDecisionInstanceManager()
-          .addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize)
+          .addRemovalTimeToDecisionsByRootProcessInstanceId(rootProcessInstanceId, removalTime, batchSize, entities)
           .addOperations(updateResult.getOperations());
     }
     return updateResult;
   }
 
-  protected UpdateResult addRemovalTime(String instanceId, Date removalTime, Integer batchSize, CommandContext commandContext) {
+  protected UpdateResult addRemovalTime(String instanceId, Date removalTime, Integer batchSize, Set<String> entities, CommandContext commandContext) {
     UpdateResult updateResult = commandContext.getHistoricProcessInstanceManager()
-      .addRemovalTimeById(instanceId, removalTime, batchSize);
+      .addRemovalTimeById(instanceId, removalTime, batchSize, entities);
     if (isDmnEnabled(commandContext)) {
       return commandContext.getHistoricDecisionInstanceManager()
-        .addRemovalTimeToDecisionsByProcessInstanceId(instanceId, removalTime, batchSize)
+        .addRemovalTimeToDecisionsByProcessInstanceId(instanceId, removalTime, batchSize, entities)
         .addOperations(updateResult.getOperations());
     }
     return updateResult;
@@ -220,9 +223,9 @@ public class ProcessSetRemovalTimeJobHandler extends AbstractBatchJobHandler<Set
       return this;
     }
 
-    public boolean isInstanceCompleted(CommandContext commandContext) {
+    public Set<String> getEntitiesToUpdate(CommandContext commandContext) {
       final int batchSize = HistoryCleanupHelper.getHistoryCleanupBatchSize(commandContext);
-      return this.operations.values().stream().noneMatch(op -> op.getRowsAffected() == batchSize);
+      return this.operations.entrySet().stream().filter(op -> op.getValue().getRowsAffected() == batchSize).map(e -> e.getKey().getName()).collect(Collectors.toSet());
     }
   }
 }

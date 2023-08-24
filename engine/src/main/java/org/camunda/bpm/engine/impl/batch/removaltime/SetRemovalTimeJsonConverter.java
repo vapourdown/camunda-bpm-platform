@@ -17,8 +17,11 @@
 package org.camunda.bpm.engine.impl.batch.removaltime;
 
 import com.google.gson.JsonObject;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.camunda.bpm.engine.impl.batch.AbstractBatchConfigurationObjectConverter;
 import org.camunda.bpm.engine.impl.batch.DeploymentMappingJsonConverter;
 import org.camunda.bpm.engine.impl.batch.DeploymentMappings;
@@ -38,6 +41,7 @@ public class SetRemovalTimeJsonConverter
   protected static final String HAS_REMOVAL_TIME = "hasRemovalTime";
   protected static final String IS_HIERARCHICAL = "isHierarchical";
   protected static final String USE_ROW_LIMIT = "useRowLimit";
+  protected static final String ENTITIES = "entities";
 
   @Override
   public JsonObject writeConfiguration(SetRemovalTimeBatchConfiguration configuration) {
@@ -49,6 +53,9 @@ public class SetRemovalTimeJsonConverter
     JsonUtil.addField(json, HAS_REMOVAL_TIME, configuration.hasRemovalTime());
     JsonUtil.addField(json, IS_HIERARCHICAL, configuration.isHierarchical());
     JsonUtil.addField(json, USE_ROW_LIMIT, configuration.isUseRowLimit());
+    if (configuration.getEntities() != null) {
+      JsonUtil.addListField(json, ENTITIES, new ArrayList<>(configuration.getEntities()));
+    }
 
     return json;
   }
@@ -59,7 +66,7 @@ public class SetRemovalTimeJsonConverter
     long removalTimeMills = JsonUtil.getLong(jsonObject, REMOVAL_TIME);
     Date removalTime = removalTimeMills > 0 ? new Date(removalTimeMills) : null;
 
-    List<String> instanceIds =  JsonUtil.asStringList(JsonUtil.getArray(jsonObject, IDS));
+    List<String> instanceIds = JsonUtil.asStringList(JsonUtil.getArray(jsonObject, IDS));
 
     DeploymentMappings mappings = JsonUtil.asList(JsonUtil.getArray(jsonObject, ID_MAPPINGS),
         DeploymentMappingJsonConverter.INSTANCE, DeploymentMappings::new);
@@ -70,11 +77,17 @@ public class SetRemovalTimeJsonConverter
 
     boolean useRowLimit = JsonUtil.getBoolean(jsonObject, USE_ROW_LIMIT);
 
+    Set<String> entities = null;
+    if (jsonObject.has(ENTITIES)) {
+      entities = new HashSet<>(JsonUtil.asStringList(JsonUtil.getArray(jsonObject, ENTITIES)));
+    }
+
     return new SetRemovalTimeBatchConfiguration(instanceIds, mappings)
       .setRemovalTime(removalTime)
       .setHasRemovalTime(hasRemovalTime)
       .setHierarchical(isHierarchical)
-      .setUseRowLimit(useRowLimit);
+      .setUseRowLimit(useRowLimit)
+      .setEntities(entities);
   }
 
 }
